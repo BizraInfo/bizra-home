@@ -1,0 +1,12 @@
+{
+  "name": "bizra-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BIZRA Node0 — constitutional runtime. PAT proposes, SAT verifies, FATE leases, receipts seal. Port 7421.",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  },
+  "dependencies": {
+    "z-ai-web-dev-sdk": "^0.0.18"
+  }
+}
