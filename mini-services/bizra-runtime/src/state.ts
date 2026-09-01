@@ -67,13 +67,18 @@ export function buildState(startedAt: number, bind?: { host: string; port: numbe
       port: bind?.port ?? 7421,
       bind_host: bind?.host ?? "127.0.0.1",
       mode: RUNTIME_MODE,
+      // CONTROL-PLANE-SEAL-1B truth projection: PUBLIC_REFERENCE is a read-only
+      // archive presentation — REFERENCE_ONLINE, never LIVE. Only LOCAL_FOUNDER
+      // after bind + successful commission reports LIVE / node0_active=true.
       status: RUNTIME_MODE === "PUBLIC_REFERENCE"
-        ? (bind?.haltedReason ? "HALTED" : "LIVE")
+        ? (bind?.haltedReason ? "HALTED" : "REFERENCE_ONLINE")
         : (kv("status") ?? "CONSTRUCTION"),
+      node0_active: RUNTIME_MODE === "PUBLIC_REFERENCE" ? false : (kv("status") === "LIVE" && !bind?.haltedReason),
+      actions_enabled: RUNTIME_MODE === "PUBLIC_REFERENCE" ? false : (kv("status") === "LIVE" && !bind?.haltedReason),
       halted_reason: RUNTIME_MODE === "PUBLIC_REFERENCE" ? (bind?.haltedReason ?? null) : kv("halted_reason"),
       phase: RUNTIME_MODE === "PUBLIC_REFERENCE" ? "PUBLIC_REFERENCE" : (kv("phase") ?? "CONSTRUCTION"),
       state_presentation: RUNTIME_MODE === "PUBLIC_REFERENCE"
-        ? "sealed archive presented read-only from an ephemeral snapshot — originals untouched, nothing appended"
+        ? "sealed archive presented read-only from an ephemeral snapshot — originals untouched, nothing appended; this is a reference presentation, not an active Node0"
         : "live local founder root — envelope-gated consequential actions only",
       archive_snapshot_dir: ARCHIVE_SNAPSHOT_DIR,
       sealed_at: kv("sealed_at"),
@@ -89,7 +94,10 @@ export function buildState(startedAt: number, bind?: { host: string; port: numbe
       root_hash: constitutionRoot(),
       drift: constitution.drift,
       files: constitution.files,
-      law: "the 3 root files are sealed — unchangeable even by their author; any byte drift halts the engine",
+      // CONTROL-PLANE-SEAL-1B: hash-seal + drift-detection is what this workspace
+      // PROVES. Physical permission immutability is NOT proven here (vault files
+      // are mode 0755 on this substrate) and is no longer claimed.
+      law: "the 3 root files are HASH-SEALED: byte drift is detected on verification and halts the engine; physical permission immutability is not proven by this workspace",
     },
     shoulder: {
       ...shoulderState(),

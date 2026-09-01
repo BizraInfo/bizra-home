@@ -98,7 +98,8 @@ export function Vault({ state }: { state: Node0State }) {
       {/* Law */}
       <div className="mt-6 flex flex-col gap-4">
         <LawLine>
-          &ldquo;Unchangeable even by its author — any byte drift halts the engine.&rdquo;
+          &ldquo;Root bytes hash-sealed — byte drift detected on verification halts the
+          engine; physical permission immutability is not proven by this workspace.&rdquo;
         </LawLine>
 
         {/* Source-drift, shown honestly when present */}
@@ -112,8 +113,14 @@ export function Vault({ state }: { state: Node0State }) {
           <StatTile
             label="runtime status"
             value={state.runtime.status}
-            tone={state.runtime.status === "LIVE" ? "emerald" : "red"}
-            sub={state.runtime.halted_reason ?? "all action routes open"}
+            tone={state.runtime.status === "LIVE" ? "emerald" : state.runtime.status === "REFERENCE_ONLINE" ? "amber" : "red"}
+            sub={
+              state.runtime.halted_reason
+                ? state.runtime.halted_reason
+                : state.runtime.status === "REFERENCE_ONLINE"
+                  ? "read-only archive presentation — Node0 not active"
+                  : "all action routes open"
+            }
           />
           <StatTile
             label="spine source drift"

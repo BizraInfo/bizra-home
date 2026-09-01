@@ -1,0 +1,144 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/RECEIPT/1",
+  "mission": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B",
+  "created_at": "2026-09-01T06:47:46.458692+00:00",
+  "law": "this receipt supersedes the invalid claims of the 1A receipt; it never rewrites it. The 1A receipt remains byte-identical at evidence/local-sovereign-boundary-1a/BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A-RECEIPT.json (sha256 fac0879d682816d5f1326d48cfc82013e0b387622729f34f8d833184767ce365).",
+  "base": {
+    "expected_head": "4decd4669633efee203a65383d270ecbcd10f2b5",
+    "expected_tree": "be4ccc8a51634d0d8a57e58751eeb24f0ca91a77",
+    "branch_created_from": "local-control-plane-seal-1b (created from the exact expected HEAD; status was clean; verified before any change \u2014 BASE_MOVED never occurred)",
+    "archive_sha256_declared": "e537b51a0fa4eb616bd2d58362408e97c8727007cff6bec8846c24b1606da0ec"
+  },
+  "implementation_commit": "f241e1a1bfcd62c2241cd0e4edf590977962d69f",
+  "implementation_tree": "09de7240001a9b1a073de8445dfa478719023091",
+  "receipt_commit_note": "this receipt references the implementation commit only; it deliberately does not contain its own future commit SHA (that would be unreproducible). The evidence commit that carries this file follows the implementation commit on the same branch.",
+  "reproduction_of_the_false_green": {
+    "run_A_live_disk": "19/19 PASS, exit 0 \u2014 passed ONLY because the git-ignored untracked src/local-init.ts existed on disk (hash exactly matched the 1A manifest claim 1a6729a5\u2026)",
+    "run_B_committed_tree_only": "18 pass / 1 fail, exit 1 \u2014 FAIL at 'local-init command' (boundary.test.ts:499, Expected 0 Received 1); full failure body preserved in BOUNDARY_1A_REPRO_RED.txt \u2014 not a 28-byte banner",
+    "manifest_before": "19 MATCH \u00b7 1 MISSING (local-init.ts) against the committed tree; 20/20 on live disk because the untracked file matched \u2014 a valid hash sealed a non-reproducible manifest entry",
+    "contradiction_register": "all 15 named contradictions CONFIRMED from disk (PRE_STATE.json); none blindly assumed"
+  },
+  "principal_binding": {
+    "registry_path": "<BIZRA_STATE_ROOT>/keys/principals.json (server-side; written only by src/init-control-key.ts or its explicit --rotate, atomically)",
+    "default_local_control_principal_id": "local:mumu:founder-control",
+    "authority_class": "LOCAL_CAPABILITY_ONLY",
+    "canonical_principal_status": "ABSENT",
+    "caller_actor_authoritative": false,
+    "law": "key_id -> local_control_principal_id is resolved server-side from the registry; the envelope v1.1 MAC binds method + exact route path + request hash; caller actor_id is descriptive-only and RESERVED LABELS (runtime, SAT-*, DEMA, NODE0, FATE, internal:*, local:*, other registered principals) are refused; v1 envelopes are refused; one key under any labels is ONE principal; the browser never receives key bytes and no generic signing endpoint exists",
+    "proven_by": [
+      "PB-01",
+      "PB-02",
+      "PB-03",
+      "PB-04",
+      "PB-05"
+    ]
+  },
+  "evidence_v2": {
+    "evidence_version": 2,
+    "producer_rule": "server-derived only \u2014 operator route: operator_input_adapter/OPERATOR_STATEMENT; internal call sites: runtime_state_observer/RUNTIME_STATE (receipt_chain_observer/RECEIPT_STATE and git_state_observer/GIT_STATE defined for the trusted adapter set); callers can never select a trusted producer/domain identity",
+    "evidence_domain_rule": "the independence unit is producer_id:evidence_domain \u2014 trusted adapter identities, not caller strings",
+    "artifact_hash_rule": "sha256 of the artifact bytes; the v2 trace digest binds ALL decision-bearing fields: ts, source, kind, correlation, payload, local_control_principal_id, producer_id, evidence_domain, artifact_hash, evidence_version",
+    "duplicate_artifact_rule": "the same artifact hash contributes no corroboration weight \u2014 a domain counts only if it brings a hash not already claimed (greedy novel-artifact counting)",
+    "corroboration_rule": "only v2 evidence rows are corroboration-eligible; one key is one operator evidence domain at N=1; repeated same-domain observations count once; two distinct trusted domains with distinct artifacts satisfy a two-source floor; legacy v1 traces are readable history, ineligible for v2 decisions",
+    "proven_by": [
+      "EV-01",
+      "EV-02",
+      "EV-03",
+      "CO-01",
+      "CO-02",
+      "CO-03",
+      "CO-04",
+      "CO-05"
+    ]
+  },
+  "truth_projection": {
+    "public_runtime_status": "REFERENCE_ONLINE",
+    "public_node0_active": false,
+    "public_actions_enabled": false,
+    "local_runtime_status_rule": "LIVE only when mode=LOCAL_FOUNDER AND the listener is bound AND commission succeeded (node0_active=true, actions_enabled=true)",
+    "public_wording": "REFERENCE ARCHIVE ONLINE \u00b7 33 RECEIPTS VERIFIED \u00b7 NODE0 ACTIVE = FALSE",
+    "root_immutability_claim": "root bytes HASH-SEALED \u2014 byte drift detected on verification halts the engine; physical permission immutability is not proven by this workspace and is not claimed",
+    "proven_by": [
+      "TL-01",
+      "TL-02",
+      "TL-03",
+      "TL-04",
+      "UI_TRUTH_REGRESSION.json (browser-verified at 1440 and 390, zero console errors, zero overflow, NODE0 LIVE literal absent everywhere)"
+    ]
+  },
+  "backup_semantics": {
+    "mechanism": "sqlite VACUUM INTO from a disposable copy of the triple (originals never opened for write) + independent chain walk",
+    "verified": {
+      "receipts": 33,
+      "links_ok": 33,
+      "head": "a1c441c3a5421805aff2028d4d624b5aafcde3955835aae54db925d477040875"
+    },
+    "shm_identity_policy": "-shm is ephemeral SQLite coordination state \u2014 excluded from immutable backup identity; the 1A receipt's -shm byte-claim (original 1b5d645d\u2026 vs preserved copy 0f621be7\u2026) is superseded, not repeated",
+    "proven_by": [
+      "BK-01",
+      "BK-02",
+      "BK-03",
+      "SQLITE_LOGICAL_BACKUP.db",
+      "SQLITE_RESTORE_VERIFY.json"
+    ]
+  },
+  "preservation": {
+    "original_archive_hashes_equal": true,
+    "chain": {
+      "length": 33,
+      "head": "a1c441c3a5421805aff2028d4d624b5aafcde3955835aae54db925d477040875",
+      "links": "33/33 (read from a disposable copy only, before and after every phase)"
+    },
+    "receipt_1a_byte_identical_and_superseded": true,
+    "authority_delta": 0
+  },
+  "tests_and_build": {
+    "original_boundary": "19/19 PASS (exit 0) \u2014 hermetic: run while the live PUBLIC runtime held 7421",
+    "control_plane_1b": "23/23 PASS (exit 0) \u2014 RED first observed at 1 pass / 22 fail with full bodies (CONTROL_PLANE_1B_RED.txt)",
+    "combined": "42/42 PASS across 2 files (exit 0)",
+    "nonce_race_100": "100/100 exactly-one-winner (exit 0)",
+    "typecheck_service": "exit 0 (bunx tsc --noEmit -p mini-services/bizra-runtime/tsconfig.json)",
+    "typecheck_app": "src/ errors: 0 \u2014 pre-existing failures only in untouched platform dirs examples/ and skills/, separated in TYPECHECK.txt",
+    "lint": "exit 0 (bun run lint)",
+    "build": "NOT_RUN_PLATFORM_BLOCKED \u2014 the hosting platform forbids `bun run build`; compensated by dev-compile-and-serve (GET / 200), tsc, and the green suites; never converted to PASS",
+    "secret_scan": "PASS (7 checks \u2014 no .key in git, no hex secrets in source, no signing oracle, no key material in evidence, browser never imports registry/initializer)",
+    "design_regression": "PRESERVED \u2014 no redesign; only truth labels changed (UI_TRUTH_REGRESSION.json)"
+  },
+  "manifest_verification_final": {
+    "command": "bun scripts/verify-receipt-manifest.ts --at-commit 4a72e29c50424cecb33cbac08b5a3ee581674464 --supersede evidence/local-control-plane-seal-1b/SUPERSEDE_1A.json",
+    "result": "19 MATCH \u00b7 1 SUPERSEDED (init-control-key.ts present at the implementation commit, 4630B) \u00b7 0 MISMATCH \u00b7 0 MISSING \u2014 every path in the 1A receipt manifest now resolves to verified bytes",
+    "raw": "FINAL_MANIFEST_VERIFY.txt"
+  },
+  "superseded_1a_claims": "SUPERSEDE_1A.json (six claims superseded/repaired: committed initializer present; exact-head green; complete red output; -shm backup identity; caller actor = principal; public reference = active Node0). All other 1A findings stand: fixed same-origin transport, loopback-only binding, origin refusal, no CORS, atomic nonce claim, disabled one-call cycle/revert, authority-before-revert, bind-before-LIVE, read-only public snapshot.",
+  "what_this_proves": [
+    "the 1A boundary is now reproducible from the committed tree at an exact head \u2014 no ignored file, no banner-only red log",
+    "a local control key maps to ONE server-side principal; caller strings can never manufacture identity or corroboration",
+    "evidence v2 binds every decision-bearing field, including principal, producer, domain, and artifact hash",
+    "corroboration independence is a property of trusted producer/domains \u2014 not of labels",
+    "PUBLIC_REFERENCE tells the truth: a read-only reference presentation, never an active Node0",
+    "the 33-receipt archive is byte-identical through the entire mission, and a logical backup restores it exactly"
+  ],
+  "what_this_does_not_prove": [
+    "physical permission immutability of the root PDFs (hash-seal + drift detection only)",
+    "any canonical Node0 principal (canonical_principal_status = ABSENT)",
+    "any local model connection, PAT-7 activation, SAT-5 at N>1, Node0 founder-mode activation, or Node0 closure",
+    "production qualification of any kind"
+  ],
+  "truth_labels": {
+    "LOCAL_CONTROL_PLANE": "IMPLEMENTED_TESTED_EXACT_HEAD_BOUND",
+    "LOCAL_CONTROL_PRINCIPAL_BINDING": "IMPLEMENTED_TESTED",
+    "CORROBORATION_IDENTITY": "SERVER_DERIVED_EVIDENCE_DOMAINS",
+    "PUBLIC_ZAI_RUNTIME": "REFERENCE_READ_ONLY",
+    "PUBLIC_NODE0_ACTIVE": false,
+    "ARCHIVED_ZAI_LOOP": "MEASURED_REFERENCE_PROTOTYPE",
+    "CANONICAL_PRINCIPAL_STATUS": "ABSENT",
+    "LOCAL_MODEL_CONNECTED": false,
+    "PAT_7_ACTIVE_LOCAL": false,
+    "SAT_5_ACTIVE_N1": false,
+    "NODE0_FOUNDER_MODE_ACTIVE": false,
+    "NODE0_CLOSED": false,
+    "PRODUCTION_QUALIFIED": false,
+    "remote_write": "UNKNOWN",
+    "authority_delta": 0
+  }
+}

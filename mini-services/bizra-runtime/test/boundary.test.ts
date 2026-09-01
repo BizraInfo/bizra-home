@@ -64,16 +64,16 @@ async function bootRuntime(opts: { mode: string; host?: string; port?: number; r
     proc, base: "", root,
     stop: async () => { try { proc.kill(9); } catch {} await new Promise((r) => setTimeout(r, 150)); },
   };
-  const candidates = [port, 7421].filter((p, i, a) => a.indexOf(p) === i);
+  // CONTROL-PLANE-1B hermeticity: poll ONLY this boot's own port. The old
+  // candidate list included 7421 — if any live runtime holds 7421, a slow
+  // boot would adopt IT as its base and test against a foreign process.
   const deadline = Date.now() + 12000;
   let found = false;
   while (Date.now() < deadline && !found) {
-    for (const p of candidates) {
-      try {
-        const res = await fetch(`http://127.0.0.1:${p}/api/health`, { signal: AbortSignal.timeout(700) });
-        if (res.ok) { b.base = `http://127.0.0.1:${p}`; found = true; break; }
-      } catch { /* not up yet */ }
-    }
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/api/health`, { signal: AbortSignal.timeout(700) });
+      if (res.ok) { b.base = `http://127.0.0.1:${port}`; found = true; break; }
+    } catch { /* not up yet */ }
     if (!found) await new Promise((r) => setTimeout(r, 250));
   }
   if (!found) throw new Error(`runtime did not become healthy (mode=${opts.mode} host=${opts.host ?? "absent"}): ${stderr.slice(-400)}`);
@@ -94,9 +94,9 @@ async function post(base: string, path: string, body: unknown, headers?: Record<
 }
 
 // ---------------------------------------------------------------------------
-// Envelope construction helpers (mirror bizra.node0.local_action_envelope.v1)
+// Envelope construction helpers (mirror bizra.node0.local_action_envelope.v1.1)
 // ---------------------------------------------------------------------------
-const SCHEMA = "bizra.node0.local_action_envelope.v1";
+const SCHEMA = "bizra.node0.local_action_envelope.v1.1";
 const canonical = (v: unknown): string => {
   if (v === null || v === undefined) return "null";
   if (typeof v === "object") {
@@ -115,23 +115,34 @@ function makeKey(root: string): { keyId: string; key: Buffer } {
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${keyId}.key`), key);
   chmodSync(join(dir, `${keyId}.key`), 0o600);
+  // register the principal server-side so the envelope resolves authority
+  const regPath = join(dir, "principals.json");
+  let reg: any = { schema: "bizra.node0.principal_registry.v1", updated_at: new Date().toISOString(), entries: [] };
+  if (existsSync(regPath)) { try { reg = JSON.parse(readFileSync(regPath, "utf8")); } catch { /* fresh */ } }
+  reg.entries = [
+    ...reg.entries.filter((e: any) => e.key_id !== keyId),
+    { key_id: keyId, local_control_principal_id: "local:mumu:founder-control", authority_class: "LOCAL_CAPABILITY_ONLY", canonical_principal_status: "ABSENT", created_at: new Date().toISOString(), status: "ACTIVE" },
+  ];
+  writeFileSync(regPath, JSON.stringify(reg, null, 2));
   return { keyId, key };
 }
 
-function makeEnvelope(action: unknown, key: Buffer, keyId: string, opts?: { expiresInSec?: number; issuedBackdateSec?: number; nonce?: string; tamperMac?: boolean }): { action: any; envelope: any } {
+function makeEnvelope(action: unknown, key: Buffer, keyId: string, opts?: { expiresInSec?: number; issuedBackdateSec?: number; nonce?: string; tamperMac?: boolean; method?: string; path?: string; actorId?: string; class?: string }): { action: any; envelope: any } {
   const now = Date.now();
   const env: any = {
     schema: SCHEMA,
+    key_id: keyId,
+    nonce: opts?.nonce ?? randomBytes(16).toString("hex"),
     action_id: randomBytes(16).toString("hex"),
-    action_class: "TRACE_INGEST",
-    actor_id: "TEST-ACTOR-1",
+    action_class: opts?.class ?? "TRACE_INGEST",
+    method: opts?.method ?? "POST",
+    path: opts?.path ?? "/api/trace",
     request_sha256: sha256hex(canonical(action)),
     intent_sha256: sha256hex(canonical((action as any).intent ?? "test intent")),
-    nonce: opts?.nonce ?? randomBytes(16).toString("hex"),
     issued_at: new Date(now - (opts?.issuedBackdateSec ?? 0) * 1000).toISOString(),
     expires_at: new Date(now + (opts?.expiresInSec ?? 60) * 1000).toISOString(),
-    key_id: keyId,
   };
+  if (opts?.actorId !== undefined) env.actor_id = opts.actorId;
   env.mac = createHmac("sha256", key).update(canonical(env)).digest("hex");
   if (opts?.tamperMac) env.mac = env.mac.slice(0, -1) + (env.mac.endsWith("0") ? "1" : "0");
   return { action, envelope: env };
@@ -254,25 +265,34 @@ describe("R4 read-only default in PUBLIC mode", () => {
 
 // R5 — ACTION ENVELOPE REQUIRED ------------------------------------------------
 describe("R5 action envelope required and fail-closed", () => {
-  test("envelope module implements bizra.node0.local_action_envelope.v1", async () => {
+  test("envelope module implements bizra.node0.local_action_envelope.v1.1 (method+path-bound, principal server-resolved)", async () => {
     const envelopeModule: any = await import("../src/envelope");
     expect(typeof envelopeModule.verifyActionEnvelope).toBe("function");
     const key = randomBytes(32);
     const keyId = envelopeModule.keyIdFor(key);
+    const registry = new Map([[keyId, { local_control_principal_id: "local:mumu:founder-control", authority_class: "LOCAL_CAPABILITY_ONLY", canonical_principal_status: "ABSENT", status: "ACTIVE" }]]);
+    const resolve = (k: string) => registry.get(k) ?? null;
     const action = { intent: "envelope battery", kind: "observation", payload: "x" };
     const env = makeEnvelope(action, key, keyId);
-    const good = envelopeModule.verifyActionEnvelope({ action, envelope: env.envelope }, { keys: new Map([[keyId, key]]), now: Date.now() });
+    const opts = { keys: new Map([[keyId, key]]), now: Date.now(), method: "POST", path: "/api/trace", resolvePrincipal: resolve, knownPrincipalIds: new Set(["local:mumu:founder-control"]) };
+    const good = envelopeModule.verifyActionEnvelope({ action, envelope: env.envelope }, opts);
     expect(good.ok).toBe(true);
-    const bad: Array<[string, any]> = [
-      ["wrong mac", { action, envelope: makeEnvelope(action, key, keyId, { tamperMac: true }).envelope }],
-      ["expired", { action, envelope: makeEnvelope(action, key, keyId, { expiresInSec: -10, issuedBackdateSec: 120 }).envelope }],
-      ["wrong request hash", { action: { intent: "envelope battery", kind: "observation", payload: "mutated" }, envelope: env.envelope }],
-      ["unknown key", { action, envelope: { ...env.envelope, key_id: "deadbeefdeadbeef" } }],
-      ["malformed (no nonce)", { action, envelope: (() => { const e = { ...env.envelope }; delete e.nonce; return e; })() }],
-      ["wrong schema", { action, envelope: { ...env.envelope, schema: "evil.v9" } }],
+    if (good.ok) expect(good.principal.local_control_principal_id).toBe("local:mumu:founder-control");
+    const bad: Array<[string, any, any]> = [
+      ["wrong mac", { action, envelope: makeEnvelope(action, key, keyId, { tamperMac: true }).envelope }, opts],
+      ["expired", { action, envelope: makeEnvelope(action, key, keyId, { expiresInSec: -10, issuedBackdateSec: 120 }).envelope }, opts],
+      ["wrong request hash", { action: { intent: "envelope battery", kind: "observation", payload: "mutated" }, envelope: env.envelope }, opts],
+      ["unknown key", { action, envelope: { ...env.envelope, key_id: "deadbeefdeadbeef" } }, opts],
+      ["malformed (no nonce)", { action, envelope: (() => { const e = { ...env.envelope }; delete e.nonce; return e; })() }, opts],
+      ["wrong schema", { action, envelope: { ...env.envelope, schema: "evil.v9" } }, opts],
+      ["superseded v1 schema", { action, envelope: { ...env.envelope, schema: "bizra.node0.local_action_envelope.v1" } }, opts],
+      ["method mismatch (route-bound)", { action, envelope: makeEnvelope(action, key, keyId, { method: "GET" }).envelope }, opts],
+      ["path mismatch (route-bound)", { action, envelope: makeEnvelope(action, key, keyId, { path: "/api/mission" }).envelope }, opts],
+      ["reserved actor label", { action, envelope: makeEnvelope(action, key, keyId, { actorId: "SAT-1" }).envelope }, opts],
+      ["unregistered principal", { action, envelope: makeEnvelope(action, key, keyId).envelope }, { ...opts, resolvePrincipal: () => null }],
     ];
-    for (const [name, body] of bad) {
-      const v = envelopeModule.verifyActionEnvelope(body, { keys: new Map([[keyId, key]]), now: Date.now() });
+    for (const [name, body, o] of bad) {
+      const v = envelopeModule.verifyActionEnvelope(body, o);
       expect(v.ok).toBe(false);
       if (!v.ok) expect(String(v.reason)).toMatch(/[A-Z_]{4,}/);
     }
@@ -337,7 +357,7 @@ describe("R7 trace provenance derived by server", () => {
     const { keyId, key } = makeKey(b.root);
     for (const label of ["runtime", "mission", "cycle", "dema", "operator", "browser"]) {
       const action = { intent: `label probe ${label}`, kind: "observation", payload: `probe-${label}`, source_label: label };
-      const e = makeEnvelope(action, key, keyId);
+      const e = makeEnvelope(action, key, keyId, { actorId: "TEST-ACTOR-1" });
       const res = await post(b.base, "/api/trace", { action, envelope: e.envelope });
       expect(res.status).toBe(200);
       const body = await jsonOf(res);
@@ -346,7 +366,11 @@ describe("R7 trace provenance derived by server", () => {
     const state = await stateOf(b.base);
     const last = state.traces.last[0];
     expect(last.source).toBe("external_operator");
-    expect(last.actor_id).toBe("TEST-ACTOR-1");
+    expect(last.actor_id).toBe("TEST-ACTOR-1"); // descriptive metadata only
+    expect(last.local_control_principal_id).toBe("local:mumu:founder-control"); // server-resolved authority
+    expect(last.producer_id).toBe("operator_input_adapter");
+    expect(last.evidence_domain).toBe("OPERATOR_STATEMENT");
+    expect(last.evidence_version).toBe(2);
   }, 30000);
 });
 
@@ -361,15 +385,25 @@ describe("R8 corroboration counts principals, not strings (in-process)", () => {
     sat = await import("../src/sat");
     auto = await import("../src/auto");
   });
-  test("one actor under two labels is one corroborating principal", async () => {
-    const t1 = traces.ingestTrace({ source: "browser", kind: "observation", payload: "same actor trace A", external: true, actor_id: "TEST-ACTOR-1" });
-    const t2 = traces.ingestTrace({ source: "mission", kind: "observation", payload: "same actor trace B", external: true, actor_id: "TEST-ACTOR-1" });
+  test("one actor under two labels is one corroborating domain (v2 evidence)", async () => {
+    const operator = (artifact: string, label: string) => ({
+      source: "browser", kind: "observation", payload: `same-domain trace ${label}`,
+      external: true, actor_id: label,
+      evidence: {
+        local_control_principal_id: "local:mumu:founder-control",
+        producer_id: "operator_input_adapter",
+        evidence_domain: "OPERATOR_STATEMENT",
+        artifact_hash: sha256hex(artifact),
+      },
+    });
+    const t1 = traces.ingestTrace(operator("A", "TEST-ACTOR-1"));
+    const t2 = traces.ingestTrace(operator("B", "OTHER-LABEL"));
     expect(t1.admissible).toBe(true);
     expect(t2.admissible).toBe(true);
     const catalog = [{ key: "TEST_CONTRACT", value: 1, min: 0, max: 10 }];
     const verdict = sat.verifyDiagnosticContract({
       cycleId: "CYCLE-R8",
-      hypothesis: "R8 probe: same principal must not satisfy the independence floor",
+      hypothesis: "R8 probe: same principal/domain must not satisfy the independence floor",
       targetContract: "TEST_CONTRACT",
       beforeValue: 1,
       afterValue: 2,
@@ -380,10 +414,13 @@ describe("R8 corroboration counts principals, not strings (in-process)", () => {
     });
     expect(verdict.clauses.corroboration.pass).toBe(false);
     expect(verdict.status).toBe("FAIL");
-    const t3 = traces.ingestTrace({ source: "runtime", kind: "observation", payload: "internal trace C" });
+    const t3 = traces.ingestTrace({
+      source: "runtime", kind: "observation", payload: "internal trace C",
+      evidence: { local_control_principal_id: null, producer_id: "runtime_state_observer", evidence_domain: "RUNTIME_STATE", artifact_hash: sha256hex("C") },
+    });
     const verdict2 = sat.verifyDiagnosticContract({
       cycleId: "CYCLE-R8",
-      hypothesis: "R8 probe: two distinct principals satisfy the floor",
+      hypothesis: "R8 probe: two distinct trusted domains satisfy the floor",
       targetContract: "TEST_CONTRACT",
       beforeValue: 1,
       afterValue: 2,
@@ -456,9 +493,11 @@ describe("R10 HTTP revert disabled this slice", () => {
 // R11 — LIVE MEANS LISTENER BOUND ---------------------------------------------------
 describe("R11 liveness is emitted only after the listener binds", () => {
   test("bind failure persists no BOOT/LIVE receipt in the state root", async () => {
-    const blocker = Bun.serve({ port: 7421, fetch: () => new Response("occupied") });
+    // CONTROL-PLANE-1B hermeticity: the old vestigial 7421 blocker is gone — a
+    // live PUBLIC runtime may legitimately hold 7421 during test runs. The
+    // bind-failure proof blocks the runtime's OWN port.
     const port = nextPort();
-    const blocker2 = Bun.serve({ port, fetch: () => new Response("occupied") });
+    const blocker = Bun.serve({ port, fetch: () => new Response("occupied") });
     const root = seedRoot();
     const env: any = { ...process.env, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_STATE_ROOT: root, BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(port) };
     const proc = spawn("bun", ["index.ts"], { cwd: SERVICE, env, stdio: ["ignore", "pipe", "pipe"] });
@@ -470,7 +509,6 @@ describe("R11 liveness is emitted only after the listener binds", () => {
     });
     if (code === null) { try { proc.kill(9); } catch {} }
     blocker.stop(true);
-    blocker2.stop(true);
     expect(code).not.toBeNull();
     expect(code).not.toBe(0);
     // the refusal must be NAMED — a bare EADDRINUSE stack trace is not a boundary
@@ -487,11 +525,11 @@ describe("R11 liveness is emitted only after the listener binds", () => {
   }, 30000);
 });
 
-// LOCAL-INIT — the dedicated local key command ---------------------------------------
-describe("local-init command", () => {
-  test("generates a 0600 key outside the repo and prints only the key_id", () => {
-    const root = mkdtempSync(join(tmpdir(), "bizra-local-init-"));
-    const res = spawnSync("bun", ["src/local-init.ts"], {
+// INIT-CONTROL-KEY — the dedicated local key command (1B §3.1) ----------------------
+describe("init-control-key command", () => {
+  test("generates a 0600 key outside the repo, binds the principal registry, and prints only non-secret identifiers", () => {
+    const root = mkdtempSync(join(tmpdir(), "bizra-init-control-key-"));
+    const res = spawnSync("bun", ["src/init-control-key.ts"], {
       cwd: SERVICE,
       env: { ...process.env, BIZRA_STATE_ROOT: root } as any,
       encoding: "utf8",
@@ -500,13 +538,45 @@ describe("local-init command", () => {
     expect(res.stdout ?? "").toMatch(/[0-9a-f]{16}/);
     const keysDir = join(root, "keys");
     expect(existsSync(keysDir)).toBe(true);
-    const files = readdirSync(keysDir);
+    const files = readdirSync(keysDir).filter((f) => f.endsWith(".key"));
     expect(files.length).toBe(1);
     const keyPath = join(keysDir, files[0]);
     expect(statSync(keyPath).size).toBe(32);
     expect(statSync(keyPath).mode & 0o777).toBe(0o600);
     const keyHex = readFileSync(keyPath).toString("hex");
-    expect(res.stdout).not.toContain(keyHex);
+    expect(res.stdout).not.toContain(keyHex); // key bytes never printed
+    // the principal registry is created server-side with honest authority labels
+    const reg = JSON.parse(readFileSync(join(keysDir, "principals.json"), "utf8"));
+    expect(reg.entries.length).toBe(1);
+    expect(reg.entries[0].authority_class).toBe("LOCAL_CAPABILITY_ONLY");
+    expect(reg.entries[0].canonical_principal_status).toBe("ABSENT");
+    expect(reg.entries[0].local_control_principal_id).toBe("local:mumu:founder-control");
+    // refuses a state root inside the source tree
+    const inside = spawnSync("bun", ["src/init-control-key.ts"], {
+      cwd: SERVICE,
+      env: { ...process.env, BIZRA_STATE_ROOT: SERVICE } as any,
+      encoding: "utf8",
+    });
+    expect(inside.status).not.toBe(0);
+    expect(inside.stderr ?? "").toMatch(/STATE_ROOT_INSIDE_SOURCE_TREE/);
+    // refuses a second initializer run without --rotate (one ACTIVE control key per root)
+    const again = spawnSync("bun", ["src/init-control-key.ts"], {
+      cwd: SERVICE,
+      env: { ...process.env, BIZRA_STATE_ROOT: root } as any,
+      encoding: "utf8",
+    });
+    expect(again.status).not.toBe(0);
+    expect(again.stderr ?? "").toMatch(/CONTROL_KEY_EXISTS/);
+    // the explicit rotation operation succeeds and marks the old key ROTATED (history kept)
+    const rotated = spawnSync("bun", ["src/init-control-key.ts", "--rotate"], {
+      cwd: SERVICE,
+      env: { ...process.env, BIZRA_STATE_ROOT: root } as any,
+      encoding: "utf8",
+    });
+    expect(rotated.status).toBe(0);
+    const regAfter = JSON.parse(readFileSync(join(keysDir, "principals.json"), "utf8"));
+    expect(regAfter.entries.filter((e: any) => e.status === "ACTIVE").length).toBe(1);
+    expect(regAfter.entries.filter((e: any) => e.status === "ROTATED").length).toBe(1);
     rmSync(root, { recursive: true, force: true });
   }, 20000);
 });

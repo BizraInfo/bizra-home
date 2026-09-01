@@ -1,0 +1,15 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · TYPECHECK
+date: 2026-09-01T06:41:13Z
+[service] bunx tsc --noEmit -p mini-services/bizra-runtime/tsconfig.json
+exit=0
+
+[app, honestly scoped] bunx tsc --noEmit (full workspace; pre-existing failures in untouched platform dirs separated below)
+exit=2
+examples/websocket/frontend.tsx(4,20): error TS2307: Cannot find module 'socket.io-client' or its corresponding type declarations.
+examples/websocket/server.ts(2,24): error TS2307: Cannot find module 'socket.io' or its corresponding type declarations.
+skills/image-edit/scripts/image-edit.ts(10,4): error TS2561: Object literal may only specify known properties, but 'images' does not exist in type 'CreateImageEditBody'. Did you mean to write 'image'?
+skills/stock-analysis-skill/src/analyzer.ts(253,11): error TS2322: Type '({ type: string; image: { type: "base64"; data: string; mediaType: "image/png"; url?: undefined; } | { type: "url"; url: string; data?: undefined; mediaType?: undefined; }; } | { type: string; text: string; })[]' is not assignable to type 'string'.
+
+--- separation ---
+src/ errors (must be zero): 0
+untouched platform dirs (examples/, skills/ — pre-existing, NOT part of this mission): see errors above

@@ -23,17 +23,22 @@ const NAV = [
   { href: "#moat", label: "Moat" },
 ];
 
-type LiveStatus = "LIVE" | "HALTED" | "UNREACHABLE";
+type LiveStatus = "LIVE" | "REFERENCE" | "HALTED" | "UNREACHABLE";
 
 function statusOf(state: Node0State | null, error: string | null): LiveStatus {
   if (!state) return "UNREACHABLE";
   if (error) return "UNREACHABLE";
   if (state.runtime.status === "HALTED") return "HALTED";
+  // CONTROL-PLANE-SEAL-1B truth projection: PUBLIC_REFERENCE / REFERENCE_ONLINE
+  // is a read-only archive presentation — never an active Node0.
+  if (state.runtime.mode === "PUBLIC_REFERENCE" || state.runtime.status === "REFERENCE_ONLINE") return "REFERENCE";
+  if (state.runtime.status === "LIVE" && state.runtime.node0_active !== true) return "REFERENCE";
   return "LIVE";
 }
 
 const pillTone: Record<LiveStatus, { dot: string; text: string; ping?: boolean }> = {
   LIVE: { dot: "bg-emerald-400", text: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10", ping: true },
+  REFERENCE: { dot: "bg-amber-400", text: "text-amber-300 border-amber-500/40 bg-amber-500/10", ping: true },
   HALTED: { dot: "bg-red-400", text: "text-red-300 border-red-500/40 bg-red-500/10", ping: true },
   UNREACHABLE: { dot: "bg-amber-400", text: "text-amber-300 border-amber-500/40 bg-amber-500/10" },
 };
@@ -80,13 +85,19 @@ export function CommandBar({
             ) : null}
             <span className={cn("relative inline-flex size-2 rounded-full", tone.dot)} aria-hidden="true" />
           </span>
-          {live === "UNREACHABLE" ? "RUNTIME UNREACHABLE" : live}
+          {live === "UNREACHABLE"
+            ? "RUNTIME UNREACHABLE"
+            : live === "REFERENCE"
+              ? "REFERENCE · READ-ONLY"
+              : live}
           <span className="sr-only">
             {live === "LIVE"
               ? "Runtime is live on port 7421"
-              : live === "HALTED"
-                ? "Runtime is halted: constitution drift"
-                : "Runtime is unreachable — retrying"}
+              : live === "REFERENCE"
+                ? "Reference archive online: read-only presentation of sealed state — Node0 is not active"
+                : live === "HALTED"
+                  ? "Runtime is halted: constitution drift"
+                  : "Runtime is unreachable — retrying"}
           </span>
         </span>
 

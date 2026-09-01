@@ -1,0 +1,68 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/REPRODUCTION_REPORT/1",
+  "mission": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B",
+  "created_at": "2026-09-01T06:18:59.274105+00:00",
+  "phase_1_summary": "The false GREEN was reproduced from both sides: the live disk passes only because a git-ignored untracked file exists; the committed tree fails at exactly the missing initializer the 1A receipt claims.",
+  "todo_1_1_boundary_suite": {
+    "run_A_live_disk": {
+      "command": "cd mini-services/bizra-runtime && bun test test/boundary.test.ts",
+      "result": "19 pass / 0 fail",
+      "true_exit_code": 0,
+      "interpretation": "FALSE GREEN reproduced: passes only because the git-ignored untracked src/local-init.ts exists on this disk with the exact hash the 1A receipt claims"
+    },
+    "run_B_committed_tree_only": {
+      "command": "git archive HEAD -> clean export; bun test test/boundary.test.ts",
+      "result": "18 pass / 1 fail",
+      "true_exit_code": 1,
+      "failing_test": "local-init command > generates a 0600 key outside the repo and prints only the key_id",
+      "failure_body": "spawnSync(\"bun\", [\"src/local-init.ts\"]) -> expect(res.status).toBe(0) \u2014 Expected: 0, Received: 1 (boundary.test.ts:499)",
+      "raw_output_preserved": "evidence/local-control-plane-seal-1b/BOUNDARY_1A_REPRO_RED.txt (full failure body, not a banner)"
+    }
+  },
+  "todo_1_2_manifest_reverification": {
+    "verifier": "mini-services/bizra-runtime/scripts/verify-receipt-manifest.ts (deterministic: fs+sha256 only)",
+    "against_live_disk": "20 MATCH / 0 MISSING \u2014 the untracked file matches the claimed hash (the receipt hashed an untracked file)",
+    "against_committed_tree_export": "19 MATCH / 1 MISSING: mini-services/bizra-runtime/src/local-init.ts (claimed sha256 1a6729a5\u2026, 2257B) \u2014 true exit code 1",
+    "raw_output_preserved": "evidence/local-control-plane-seal-1b/RECEIPT_MANIFEST_REPRO.txt"
+  },
+  "todo_1_3_truth_probes": {
+    "P1_caller_actor_id_authoritative_after_hmac": {
+      "verdict": "CONFIRMED",
+      "source_bound": "src/envelope.ts:67-73 (actor_id is a caller-supplied required envelope field); src/server.ts:335 (ingestTrace receives actor_id: gate.envelope.actor_id); src/server.ts:341 (response returns principal: gate.envelope.actor_id)",
+      "meaning": "A single key holder can sign actor_id='alice', 'bob', 'SAT-1', or any string; every envelope has a valid MAC; the server then treats the string as the authenticated principal. HMAC proves key possession, not identity."
+    },
+    "P2_trace_digest_excludes_actor": {
+      "verdict": "CONFIRMED",
+      "source_bound": "src/traces.ts:81 \u2014 sha256obj({ts, source, kind, correlation, payload}); sat.ts:100 recomputes the same fields",
+      "meaning": "The persisted actor identity is not bound by the trace digest; it can change without breaking the seal."
+    },
+    "P3_sat_counts_caller_actor_strings": {
+      "verdict": "CONFIRMED",
+      "source_bound": "src/sat.ts:136 \u2014 new Set(citedRows.map(r => r.actor_id ?? `internal:${r.source}`))",
+      "meaning": "Distinct caller-supplied actor strings (or internal call-site labels) are counted as distinct independent principals \u2014 corroboration can be manufactured by one key."
+    },
+    "P4_public_mode_emits_live": {
+      "verdict": "CONFIRMED",
+      "source_bound": "src/server.ts:258 (health: status = ... PUBLIC_REFERENCE ? 'LIVE' : ...); src/state.ts:70-71 (buildState: runtime.status 'LIVE' for PUBLIC_REFERENCE)",
+      "measured": "curl /api/health while the reference runtime was up returned {\"status\":\"LIVE\",\"mode\":\"PUBLIC_REFERENCE\"} (measured 2026-09-01, before this mission stopped the process)"
+    },
+    "P5_home_renders_node0_live_from_public_mode": {
+      "verdict": "CONFIRMED",
+      "source_bound": "src/components/bizra/hero.tsx:17 (live = state.runtime.status === 'LIVE') and :100 (renders 'NODE0 LIVE'); src/components/bizra/nav.tsx (LIVE \u00b7 N RCPT pill); src/components/bizra/proof.tsx:449 ('live runtime 127.0.0.1:7421'); src/components/bizra/footer.tsx:26-27 ('read live from the Node0 runtime')",
+      "measured": "Browser-verified earlier in this session (agent-browser via :81 gateway): hero read 'NODE0 LIVE \u00b7 33 RECEIPTS VERIFIED' while the runtime was PUBLIC_REFERENCE"
+    },
+    "P6_old_backup_copy_shm_differs": {
+      "verdict": "CONFIRMED",
+      "original_shm_sha256": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a",
+      "preserved_copy_shm_sha256": "0f621be7ae0412b0fefd41ae1a5e9e30ee1589afc732c0aacddd9ce793e785f0",
+      "db_and_wal_match": true,
+      "meaning": "-shm is mutable SQLite coordination state; byte-equality of a live -shm is not a backup identity. The correct proof is a logical SQLite backup plus a chain walk (implemented in TODO 3.9)."
+    },
+    "P7_current_head_later_than_1a_receipt_head": {
+      "verdict": "CONFIRMED",
+      "git_evidence": "main: 03d9bc7 (1A receipt) -> 42be709 -> 4decd46 (current); later commits add the Vision section + worklog, not boundary code; no exact-head boundary proof binds 4decd46 (this mission supplies it)"
+    }
+  },
+  "contradiction_register_verdicts": "All 15 named contradictions CONFIRMED from disk \u2014 none blindly assumed (see PRE_STATE.json for full evidence strings)",
+  "implementation_may_begin": true
+}

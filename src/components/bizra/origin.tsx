@@ -6,15 +6,20 @@
  */
 
 import { Reveal } from "./shared";
+import { classifyRuntime } from "./runtime-status";
+import type { Node0State } from "@/components/node0/types";
 
-const STATS: Array<{ value: string; label: string; note: string; tone: "gold" | "verdant" }> = [
-  { value: "3 years", label: "every single day", note: "day and night, without exception", tone: "gold" },
-  { value: "1 builder", label: "solo, sovereign", note: "one of the people, not above them", tone: "gold" },
-  { value: "Node0", label: "live · receipt-backed", note: "measured, not promised", tone: "verdant" },
-  { value: "7 + 5", label: "PAT for you · SAT for all", note: "private proposals, shared verdicts", tone: "gold" },
-];
-
-export function Origin() {
+export function Origin({ state }: { state: Node0State | null }) {
+  const reference = classifyRuntime(state?.runtime, state != null) === "REFERENCE";
+  const node0Card = reference
+    ? { value: "Node0", label: "reference · receipt-backed", note: "sealed archive, measured — not an active node" }
+    : { value: "Node0", label: "live · receipt-backed", note: "measured, not promised" };
+  const STATS: Array<{ value: string; label: string; note: string; tone: "gold" | "verdant" }> = [
+    { value: "3 years", label: "every single day", note: "day and night, without exception", tone: "gold" },
+    { value: "1 builder", label: "solo, sovereign", note: "one of the people, not above them", tone: "gold" },
+    { value: node0Card.value, label: node0Card.label, note: node0Card.note, tone: "gold" },
+    { value: "7 + 5", label: "PAT for you · SAT for all", note: "private proposals, shared verdicts", tone: "gold" },
+  ];
   return (
     <section
       id="origin"

@@ -16,6 +16,7 @@
 
 import { SeedMark } from "./seed-mark";
 import { Reveal, LiveDot, TruthChip } from "./shared";
+import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 /* ------------------------------------------------------------------ */
@@ -149,6 +150,8 @@ function PoolMark() {
 
 export function Vision({ state }: { state: Node0State | null }) {
   const live = state && state.ok;
+  const reference = classifyRuntime(state?.runtime, live ? true : false) === "REFERENCE";
+  const organPrefix = reference ? "measured organ (reference)" : "live organ";
   const chainLen = state?.chain.len;
 
   return (
@@ -222,7 +225,7 @@ export function Vision({ state }: { state: Node0State | null }) {
                       live ? "text-verdant/85" : "text-solar/70"
                     }`}
                   >
-                    <span className="whitespace-nowrap">▸ live organ</span>
+                    <span className="whitespace-nowrap">▸ {organPrefix}</span>
                     <span aria-hidden="true"> · </span>
                     {p.live(state)}
                   </p>

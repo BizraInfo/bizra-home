@@ -140,7 +140,7 @@ function Lineage({ state, sh }: { state: Node0State; sh: ShoulderState }) {
       id: "root",
       kind: "root",
       name: "ROOT",
-      line: `${state.constitution.files.length} sealed PDFs · immutable even by their author`,
+      line: `${state.constitution.files.length} sealed PDFs · hash-sealed, drift detected on verification`,
       hash: { value: sh.stands_on, label: "root hash" },
     },
     {
@@ -170,7 +170,7 @@ function Lineage({ state, sh }: { state: Node0State; sh: ShoulderState }) {
       <span className="size-1.5 rounded-full bg-amber-400" aria-hidden="true" />
       sealed · #{sh.receipt_seq ?? "—"}
     </span>,
-    <StatusChip key="live" status={state.runtime.status} />,
+    <StatusChip key="live" status={state.runtime.status === "REFERENCE_ONLINE" ? "REFERENCE" : state.runtime.status} />,
   ];
 
   return (

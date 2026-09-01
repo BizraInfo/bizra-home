@@ -1,0 +1,295 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/PRE_STATE/1",
+  "mission": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B",
+  "created_at": "2026-09-01T06:15:45.084645+00:00",
+  "git": {
+    "head": "4decd4669633efee203a65383d270ecbcd10f2b5",
+    "tree": "be4ccc8a51634d0d8a57e58751eeb24f0ca91a77",
+    "status_porcelain": "?? tool-results/read_1788242882351_bafeb9fda138.txt",
+    "branch_at_creation": "local-control-plane-seal-1b (created from HEAD 4decd46; main==HEAD verified before branching)",
+    "log5": [
+      "4decd4669633efee203a65383d270ecbcd10f2b5 be4ccc8a51634d0d8a57e58751eeb24f0ca91a77 2026-09-01T04:56:06Z f1f49faf-1ce1-436a-b527-969b93357157",
+      "42be70908d94e963b50cf48472af64e2d5c0df6b 3a8eede1cd82f96d7c8c3554ef7e6dcb957b3dc1 2026-09-01T04:28:34Z e1c23593-9728-48d2-ac60-7c3fb70f239e",
+      "03d9bc7e4b814a47f60b72f28c5f88cec4ddb297 a2d3a10b1de53fc112643d81cf0b4cc5411cde5d 2026-09-01T04:27:33Z BOUNDARY-1A PROOF RECEIPT: 19/19 boundary tests green, design preserved, archive byte-identical (pre==post), restore drill verified, authority_delta=0 \u2014 receipt sha256 fac0879d682816d5f1326d48cfc82013e0b387622729f34f8d833184767ce365",
+      "4a72e29c50424cecb33cbac08b5a3ee581674464 95261941014831f3d213641ffa9572aa8fa7604d 2026-09-01T04:26:53Z BOUNDARY-1A IMPLEMENTATION: local sovereign control boundary closed.",
+      "dc43aa26da4f0c4df94bbe25438c6668dba48755 c9d228854090a45d7dc86fea69856f4cc06a1051 2026-09-01T04:13:05Z BOUNDARY-1A RED: 19 failing boundary tests observed pre-implementation (0 pass / 19 fail) \u2014 RED_TESTS.json + raw output"
+    ],
+    "expected_head": "4decd4669633efee203a65383d270ecbcd10f2b5",
+    "expected_tree": "be4ccc8a51634d0d8a57e58751eeb24f0ca91a77",
+    "base_bind": "EXACT_MATCH"
+  },
+  "original_archive": {
+    "triple": {
+      "bizra.db": {
+        "bytes": 4096,
+        "mode": "755",
+        "mtime": "2026-08-31T21:17:53+00:00",
+        "sha256": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70"
+      },
+      "bizra.db-wal": {
+        "bytes": 2154792,
+        "mode": "755",
+        "mtime": "2026-08-31T23:51:40.261648+00:00",
+        "sha256": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a"
+      },
+      "bizra.db-shm": {
+        "bytes": 32768,
+        "mode": "755",
+        "mtime": "2026-08-31T23:51:32.625650+00:00",
+        "sha256": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a"
+      }
+    },
+    "expected": {
+      "bizra.db": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70",
+      "bizra.db-wal": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a",
+      "bizra.db-shm": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a"
+    },
+    "all_expected_match": true
+  },
+  "chain_from_disposable_copy": {
+    "receipt_count": 33,
+    "links_verified": 33,
+    "broken_at": null,
+    "head": "a1c441c3a5421805aff2028d4d624b5aafcde3955835aae54db925d477040875",
+    "method": "cp of the triple to a temp dir, opened there, walked with digest=sha256(prev|kind|subject|payload); originals untouched"
+  },
+  "contradictions": {
+    "C1_local_init_absent_from_committed_tree": {
+      "status": "CONFIRMED",
+      "evidence": "file exists ON DISK (untracked) at mini-services/bizra-runtime/src/local-init.ts, sha256=1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9, 2257 bytes \u2014 but git ls-files does not know it; git cat-file -e 4decd46:... fails ('exists on disk, but not in 4decd46'); .gitignore:43 'local-*' matches it (git check-ignore -v)"
+    },
+    "C2_gitignore_ignores_the_path": {
+      "status": "CONFIRMED",
+      "evidence": ".gitignore line 43 = 'local-*'; git check-ignore -v mini-services/bizra-runtime/src/local-init.ts -> .gitignore:43 local-*"
+    },
+    "C3_boundary_test_executes_missing_path": {
+      "status": "CONFIRMED",
+      "evidence": "test/boundary.test.ts:494 spawnSync('bun', ['src/local-init.ts']) and expects res.status === 0 (line 499)"
+    },
+    "C4_receipt_claims_file_exists": {
+      "status": "CONFIRMED",
+      "evidence": "1A receipt changed_files_sha256['mini-services/bizra-runtime/src/local-init.ts'] = {sha256: 1a6729a5\u2026, bytes: 2257}; the hash matches the UNTRACKED disk file \u2014 a valid hash sealed a non-reproducible manifest entry"
+    },
+    "C5_manifest_19_match_1_missing": {
+      "status": "CONFIRMED",
+      "evidence": "manifest has 20 entries; 19 exist in the committed tree; local-init.ts is missing from the tree (on-disk untracked copy matches its hash)"
+    },
+    "C6_red_run_output_is_banner_only": {
+      "status": "CONFIRMED",
+      "evidence": "evidence/local-sovereign-boundary-1a/red-run-output.txt = 28 bytes, content is only 'bun test v1.3.14 (0d9b296a)' \u2014 no failure bodies preserved"
+    },
+    "C7_malformed_timestamp": {
+      "status": "CONFIRMED",
+      "evidence": "RED_TESTS.json recorded_at = '2026-09-01T09:5x:00+04:00' \u2014 '09:5x' is not a valid time"
+    },
+    "C8_old_branch_points_at_old_base": {
+      "status": "CONFIRMED",
+      "evidence": "git rev-parse local-sovereign-boundary-1a = 13e287e329f5e70950c859cefb3b93ada2c36e9e (the archive base) while the 1A commits live on main"
+    },
+    "C9_caller_actor_id_authoritative": {
+      "status": "CONFIRMED",
+      "evidence": "envelope.ts ActionEnvelope.actor_id is a caller field inside the MAC; server.ts requireEnvelope passes gate.envelope.actor_id into ingestTrace(...) and returns principal: gate.envelope.actor_id \u2014 HMAC proves key possession, not actor identity"
+    },
+    "C10_trace_digest_excludes_actor": {
+      "status": "CONFIRMED",
+      "evidence": "traces.ts:81 sha256obj({ts, source, kind, correlation, payload}) \u2014 actor_id (and any principal/provenance) is excluded from the digest; sat.ts:100 recomputes the same incomplete digest"
+    },
+    "C11_sat_counts_caller_actor_strings": {
+      "status": "CONFIRMED",
+      "evidence": "sat.ts:136 principals = new Set(citedRows.map(r => r.actor_id ?? `internal:${r.source}`)) \u2014 one key can manufacture N apparent principals by signing N actor strings"
+    },
+    "C12_public_reference_reports_live": {
+      "status": "CONFIRMED",
+      "evidence": "server.ts:258 health returns status='LIVE' for PUBLIC_REFERENCE (measured live earlier this session); state.ts:70-71 buildState returns runtime.status='LIVE' for PUBLIC_REFERENCE; hero.tsx:17 + nav.tsx render NODE0 LIVE / LIVE \u00b7 33 RCPT from runtime.status==='LIVE'"
+    },
+    "C13_immutable_wording_vs_mode_0755": {
+      "status": "CONFIRMED",
+      "evidence": "state.ts:92 constitution.law = 'the 3 root files are sealed \u2014 unchangeable even by their author; any byte drift halts the engine'; node0/shoulder.tsx:143 'immutable even by their author'; proof.tsx constitution tile chip='Immutable' \u2014 while archived vault PDFs are mode 0755 (measured) and upload/ PDFs 0777; what is proven is hash-seal + drift detection, not physical immutability"
+    },
+    "C14_backup_shm_differs": {
+      "status": "CONFIRMED",
+      "evidence": "original bizra.db-shm sha256 1b5d645d\u2026 vs archive-preserved/bizra.db-shm 0f621be7\u2026 (db + wal match exactly) \u2014 -shm is mutable SQLite coordination state and must not be an immutable backup identity"
+    },
+    "C15_no_exact_head_proof_at_current_head": {
+      "status": "CONFIRMED",
+      "evidence": "1A receipt is bound to implementation commit 4a72e29 / receipt commit 03d9bc7; current head 4decd46 adds later Vision commits with no exact-head boundary proof"
+    }
+  },
+  "manifest_1a_source_hashes": {
+    "manifest_size": 20,
+    "on_disk_matching": 20,
+    "in_committed_tree": 19,
+    "missing_from_committed_tree": [
+      "mini-services/bizra-runtime/src/local-init.ts"
+    ],
+    "entries": {
+      "Caddyfile": {
+        "claimed_sha256": "53429109eab94bcfbcd4b673658d01ade86999ef6336a53c1f4354de575cae50",
+        "claimed_bytes": 806,
+        "current_disk_sha256": "53429109eab94bcfbcd4b673658d01ade86999ef6336a53c1f4354de575cae50",
+        "current_disk_bytes": 806,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      ".gitignore": {
+        "claimed_sha256": "91b518db15a2ce82d09625bbc45a0372a85162d2e5ceb05fc8d97e1e1ab40a41",
+        "claimed_bytes": 857,
+        "current_disk_sha256": "91b518db15a2ce82d09625bbc45a0372a85162d2e5ceb05fc8d97e1e1ab40a41",
+        "current_disk_bytes": 857,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "src/app/api/node0/[...path]/route.ts": {
+        "claimed_sha256": "d7b19d0dc2d2ab5cdf6353d7d5629a13044a3e935ee35f25b927fda60bf18013",
+        "claimed_bytes": 2677,
+        "current_disk_sha256": "d7b19d0dc2d2ab5cdf6353d7d5629a13044a3e935ee35f25b927fda60bf18013",
+        "current_disk_bytes": 2677,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "src/components/node0/api.ts": {
+        "claimed_sha256": "c1e47e4c16fb16385b8654c8b2acb259456b9c4622a9765062ef014a2b054ec9",
+        "claimed_bytes": 3559,
+        "current_disk_sha256": "c1e47e4c16fb16385b8654c8b2acb259456b9c4622a9765062ef014a2b054ec9",
+        "current_disk_bytes": 3559,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "src/components/node0/use-node0-state.ts": {
+        "claimed_sha256": "65c27c8c60f5096627e0f4de261ba3984e2f1cb809d3d5840c67aeda54fc3d84",
+        "claimed_bytes": 2274,
+        "current_disk_sha256": "65c27c8c60f5096627e0f4de261ba3984e2f1cb809d3d5840c67aeda54fc3d84",
+        "current_disk_bytes": 2274,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/index.ts": {
+        "claimed_sha256": "995d2e340a48efb9200c068cdd5d276eb5d63306b128e8b6137f7a1d46363d8c",
+        "claimed_bytes": 1033,
+        "current_disk_sha256": "995d2e340a48efb9200c068cdd5d276eb5d63306b128e8b6137f7a1d46363d8c",
+        "current_disk_bytes": 1033,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/mode.ts": {
+        "claimed_sha256": "4479b3fe477cfd2e05d3aef301aa28f1ea6dfe232398e117010cedab1435ab2f",
+        "claimed_bytes": 3557,
+        "current_disk_sha256": "4479b3fe477cfd2e05d3aef301aa28f1ea6dfe232398e117010cedab1435ab2f",
+        "current_disk_bytes": 3557,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/server.ts": {
+        "claimed_sha256": "1f13a94bcc32ae572f0acf4363266a3510b21be3fc83823eaa82c8ef521d102a",
+        "claimed_bytes": 17247,
+        "current_disk_sha256": "1f13a94bcc32ae572f0acf4363266a3510b21be3fc83823eaa82c8ef521d102a",
+        "current_disk_bytes": 17247,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/envelope.ts": {
+        "claimed_sha256": "04bd0b486e574e2768c95c441ee04e57b3e68c14604136878d3d763e8a3a5f23",
+        "claimed_bytes": 5469,
+        "current_disk_sha256": "04bd0b486e574e2768c95c441ee04e57b3e68c14604136878d3d763e8a3a5f23",
+        "current_disk_bytes": 5469,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/local-init.ts": {
+        "claimed_sha256": "1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9",
+        "claimed_bytes": 2257,
+        "current_disk_sha256": "1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9",
+        "current_disk_bytes": 2257,
+        "disk_matches_claim": true,
+        "in_committed_tree": false
+      },
+      "mini-services/bizra-runtime/src/store.ts": {
+        "claimed_sha256": "b5be6698d9227b1b7d43b994c50bc368ccf915a591b816408af846e556252da3",
+        "claimed_bytes": 7786,
+        "current_disk_sha256": "b5be6698d9227b1b7d43b994c50bc368ccf915a591b816408af846e556252da3",
+        "current_disk_bytes": 7786,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/traces.ts": {
+        "claimed_sha256": "d3186acfc2250decde4a8438844a78270f422021edcfe52f93fab19c060ca20b",
+        "claimed_bytes": 5595,
+        "current_disk_sha256": "d3186acfc2250decde4a8438844a78270f422021edcfe52f93fab19c060ca20b",
+        "current_disk_bytes": 5595,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/sat.ts": {
+        "claimed_sha256": "30ae49b965e8307400caf27bd04c29767cc787b2c6d967e4964be91fcca37ba8",
+        "claimed_bytes": 9108,
+        "current_disk_sha256": "30ae49b965e8307400caf27bd04c29767cc787b2c6d967e4964be91fcca37ba8",
+        "current_disk_bytes": 9108,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/auto.ts": {
+        "claimed_sha256": "c278490e3cb59d1e37845a413fb22684bd06e6f6f1cec10dc36c0ec9d4fcac27",
+        "claimed_bytes": 21855,
+        "current_disk_sha256": "c278490e3cb59d1e37845a413fb22684bd06e6f6f1cec10dc36c0ec9d4fcac27",
+        "current_disk_bytes": 21855,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/fate.ts": {
+        "claimed_sha256": "97b6e745c40fe995fec90ab59b54504b43b611b6ed740896d16625b1928350ea",
+        "claimed_bytes": 4085,
+        "current_disk_sha256": "97b6e745c40fe995fec90ab59b54504b43b611b6ed740896d16625b1928350ea",
+        "current_disk_bytes": 4085,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/mission.ts": {
+        "claimed_sha256": "2bba7a2b16daf73bb354450bbc89d5a77d17112e4e2a7c58f6a41829d9bb9fd7",
+        "claimed_bytes": 14829,
+        "current_disk_sha256": "2bba7a2b16daf73bb354450bbc89d5a77d17112e4e2a7c58f6a41829d9bb9fd7",
+        "current_disk_bytes": 14829,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/src/state.ts": {
+        "claimed_sha256": "a60d63725b7f07980868e14fb6085f35c21ba7386d958bc091c9f3d9dbedfcaa",
+        "claimed_bytes": 6355,
+        "current_disk_sha256": "a60d63725b7f07980868e14fb6085f35c21ba7386d958bc091c9f3d9dbedfcaa",
+        "current_disk_bytes": 6355,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/types/bun-shim.d.ts": {
+        "claimed_sha256": "fd21ef0069ac88f8cd6c44f6231143313503b34fed4e710319b215705e4e0f39",
+        "claimed_bytes": 1651,
+        "current_disk_sha256": "fd21ef0069ac88f8cd6c44f6231143313503b34fed4e710319b215705e4e0f39",
+        "current_disk_bytes": 1651,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/tsconfig.json": {
+        "claimed_sha256": "2fa63758a5a38d1eacb3cd1a257158922a4e81130adabbace472c9a2eaddf1ee",
+        "claimed_bytes": 343,
+        "current_disk_sha256": "2fa63758a5a38d1eacb3cd1a257158922a4e81130adabbace472c9a2eaddf1ee",
+        "current_disk_bytes": 343,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      },
+      "mini-services/bizra-runtime/test/boundary.test.ts": {
+        "claimed_sha256": "f77013bd85b05b7cfa6aa6e25f139f8b682029694a0c92a99fbcca478cd68ebf",
+        "claimed_bytes": 27135,
+        "current_disk_sha256": "f77013bd85b05b7cfa6aa6e25f139f8b682029694a0c92a99fbcca478cd68ebf",
+        "current_disk_bytes": 27135,
+        "disk_matches_claim": true,
+        "in_committed_tree": true
+      }
+    }
+  },
+  "manifest_existence_result": "20 entries: 19 exist on disk and hash-match the receipt (and are in the committed tree); 1 (mini-services/bizra-runtime/src/local-init.ts) exists ONLY as an untracked ignored disk file \u2014 absent from the committed tree: the exact-head 19/19 GREEN claim is not reproducible from the committed source",
+  "runtime_at_pre": {
+    "mode": "PUBLIC_REFERENCE",
+    "bind": "127.0.0.1:7421",
+    "status_reported": "LIVE (the false-green this mission corrects)",
+    "note": "runtime process stopped for test phases; archive triple hashes re-verified after stop"
+  }
+}

@@ -95,10 +95,10 @@ export function Reveal({
   );
 }
 
-/** A live-status dot — the pulse that means "measured, now". */
-export function LiveDot({ tone = "verdant" }: { tone?: "verdant" | "solar" | "ember" }) {
+/** A live-status dot — the pulse that means "measured, now". Gold marks the reference archive. */
+export function LiveDot({ tone = "verdant" }: { tone?: "verdant" | "solar" | "ember" | "gold" }) {
   const color =
-    tone === "verdant" ? "#34d399" : tone === "solar" ? "#fbbf24" : "#f87171";
+    tone === "verdant" ? "#34d399" : tone === "solar" ? "#fbbf24" : tone === "ember" ? "#f87171" : "#c9a962";
   return (
     <span className="relative inline-flex size-2 flex-none" aria-hidden="true">
       <span

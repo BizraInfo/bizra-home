@@ -1,0 +1,5 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · LINT
+command: bun run lint
+date: 2026-09-01T06:41:38Z
+exit=0
+$ eslint .

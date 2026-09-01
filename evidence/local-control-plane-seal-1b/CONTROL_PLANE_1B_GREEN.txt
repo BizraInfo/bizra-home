@@ -1,0 +1,36 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · CONTROL_PLANE_1B_GREEN
+command: bun test test/control-plane-seal-1b.test.ts
+note: run while the live PUBLIC_REFERENCE runtime held 127.0.0.1:7421 — suites are hermetic (own-port polling only)
+date: 2026-09-01T06:46:04Z
+bun test v1.3.14 (0d9b296a)
+
+test/control-plane-seal-1b.test.ts:
+(pass) RF reproducibility of the 1A proof > RF-01 every path in the 1A receipt manifest resolves and hashes correctly (at the 1A implementation commit, missing entry superseded) [56.74ms]
+(pass) RF reproducibility of the 1A proof > RF-02 the local control-key initializer is tracked by Git and not ignored [2.74ms]
+(pass) RF reproducibility of the 1A proof > RF-03 preserved test outputs contain full pass/fail bodies, not only a tool banner [0.24ms]
+(pass) PB local control principal binding > PB-01 one key signing actor_id 'alice' and 'bob' resolves to ONE authoritative local-control principal [451.26ms]
+(pass) PB local control principal binding > PB-02 one key cannot claim SAT-1, runtime, DEMA, another registered principal, or reserved labels [487.37ms]
+(pass) PB local control principal binding > PB-03 unknown key_id refuses with ZERO mutation (nonce, trace, receipt, mission, state) [464.98ms]
+(pass) PB local control principal binding > PB-04 the browser never receives the HMAC secret; no generic sign-arbitrary-payload endpoint exists [452.50ms]
+(pass) PB local control principal binding > PB-05 local-control identity is explicitly LOCAL_CAPABILITY_ONLY — never the canonical principal [453.25ms]
+(pass) EV evidence binding > EV-01 the trace digest binds ALL decision-bearing fields — tampering any one breaks verification [50.17ms]
+(pass) EV evidence binding > EV-02 archived v1 traces are readable history but cannot satisfy a v2 corroboration decision [41.38ms]
+(pass) EV evidence binding > EV-03 caller-supplied source/producer/domain/principal/actor/role/agent fields are descriptive-only or refused [440.41ms]
+(pass) CO corroboration by trusted producer/domain > CO-01 one bound local principal under ten labels counts as ONE operator evidence domain [44.27ms]
+(pass) CO corroboration by trusted producer/domain > CO-02 the same artifact hash resubmitted under different labels or nonces adds no corroboration weight [35.64ms]
+(pass) CO corroboration by trusted producer/domain > CO-03 repeated observations from the same producer/domain count once for independence [41.35ms]
+(pass) CO corroboration by trusted producer/domain > CO-04 two distinct trusted producer/domains with distinct artifact hashes satisfy a two-source rule [33.23ms]
+(pass) CO corroboration by trusted producer/domain > CO-05 Node0/N=1 never pretends one HMAC key represents multiple humans [37.66ms]
+(pass) TL truthful status projection > TL-01 PUBLIC_REFERENCE health/state: REFERENCE_ONLINE · node0_active=false · actions_enabled=false — never LIVE [412.27ms]
+(pass) TL truthful status projection > TL-02 public Home displays REFERENCE ARCHIVE ONLINE — never NODE0 LIVE in reference mode [2.23ms]
+(pass) TL truthful status projection > TL-03 only LOCAL_FOUNDER + bound + commissioned (node0_active=true) displays NODE0 LIVE [406.53ms]
+(pass) TL truthful status projection > TL-04 constitutional copy claims hash-sealing and drift detection — no physical immutability claim [413.28ms]
+(pass) BK backup semantics > BK-01 a logically consistent SQLite backup restores 33/33 chain records and the exact chain head [36.25ms]
+(pass) BK backup semantics > BK-02 -shm is recorded as ephemeral coordination state and excluded from immutable backup identity [34.12ms]
+(pass) BK backup semantics > BK-03 the original archive db, wal, and shm hashes remain unchanged [3.17ms]
+
+ 23 pass
+ 0 fail
+ 167 expect() calls
+Ran 23 tests across 1 file. [4.42s]
+TRUE_EXIT_CODE=0

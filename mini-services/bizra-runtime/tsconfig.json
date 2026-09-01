@@ -9,5 +9,5 @@
     "allowImportingTsExtensions": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["index.ts", "src/**/*.ts", "test/**/*.ts", "types/**/*.d.ts"]
+  "include": ["index.ts", "src/**/*.ts", "test/**/*.ts", "scripts/**/*.ts", "types/**/*.d.ts"]
 }

@@ -1,0 +1,51 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/UI_TRUTH_REGRESSION/1",
+  "mission": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B",
+  "created_at": "2026-09-01T06:43:46.307050+00:00",
+  "method": "agent-browser through the real :81 gateway (the user's path), against the PUBLIC_REFERENCE runtime serving the sealed 33-receipt archive with the 1B truth projection",
+  "runtime_ground_truth": {
+    "health": {
+      "status": "REFERENCE_ONLINE",
+      "mode": "PUBLIC_REFERENCE",
+      "node0_active": false,
+      "actions_enabled": false
+    },
+    "state": {
+      "runtime.status": "REFERENCE_ONLINE",
+      "runtime.node0_active": false,
+      "constitution.law": "HASH-SEALED \u2026 physical permission immutability is not proven by this workspace"
+    }
+  },
+  "desktop_1440": {
+    "hero_reference_archive_online": true,
+    "hero_node0_active_false": true,
+    "node0_live_literal_anywhere": false,
+    "nav_badge": "REFERENCE",
+    "receipts_verified_33": true,
+    "constitution_hash_sealed_wording": true,
+    "immutable_unchangeable_claim": false,
+    "footer_reference_wording": true,
+    "reference_uptime_label": true,
+    "measured_organ_reference_prefix": true,
+    "origin_reference_receipt_backed_card": true,
+    "loop_reference_lead": true,
+    "receipt_spine_cells": 33,
+    "page_errors": 0,
+    "console_errors": 0,
+    "horizontal_overflow": false
+  },
+  "mobile_390": {
+    "hero_reference_archive_online": true,
+    "hero_node0_active_false": true,
+    "node0_live_literal_anywhere": false,
+    "horizontal_overflow": false,
+    "scrollWidth_equals_clientWidth": "390 == 390"
+  },
+  "screenshots": [
+    "ui-truth-desktop-hero.png",
+    "ui-truth-proof.png",
+    "ui-truth-mobile.png"
+  ],
+  "design_preservation": "No layout or visual redesign: only truth-label wording and status classification changed (hero status line, nav badge, proof chip 'Hash-sealed', mode-aware uptime/source-of-truth/footer/vision/origin/loop labels). The Seed-of-Life brand system, section rhythm, and all measurements are unchanged.",
+  "verdict": "PASS \u2014 the public face never says NODE0 LIVE in reference mode; it says REFERENCE ARCHIVE ONLINE \u00b7 33 RECEIPTS VERIFIED \u00b7 NODE0 ACTIVE = FALSE"
+}

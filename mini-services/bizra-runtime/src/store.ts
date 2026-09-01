@@ -90,7 +90,9 @@ if (RESOLVED.mode === "LOCAL_FOUNDER") {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ts TEXT NOT NULL, source TEXT NOT NULL, kind TEXT NOT NULL,
       correlation TEXT, payload TEXT NOT NULL, sha256 TEXT NOT NULL,
-      admissible INTEGER NOT NULL, gate_reason TEXT, actor_id TEXT
+      admissible INTEGER NOT NULL, gate_reason TEXT, actor_id TEXT,
+      local_control_principal_id TEXT, producer_id TEXT,
+      evidence_domain TEXT, artifact_hash TEXT, evidence_version INTEGER
     );
     CREATE TABLE IF NOT EXISTS hypotheses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,33 +133,52 @@ if (RESOLVED.mode === "LOCAL_FOUNDER") {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       ts TEXT NOT NULL, cycle_id TEXT NOT NULL, status TEXT NOT NULL, detail TEXT
     );
+    -- CONTROL-PLANE-SEAL-1B: nonce ownership is bound to the server-resolved
+    -- local-control principal (single-insert PK race law preserved).
     CREATE TABLE IF NOT EXISTS action_nonces (
       nonce TEXT PRIMARY KEY,
+      key_id TEXT NOT NULL,
+      local_control_principal_id TEXT NOT NULL,
       action_id TEXT NOT NULL,
       action_class TEXT NOT NULL,
+      method TEXT NOT NULL,
+      path TEXT NOT NULL,
       request_sha256 TEXT NOT NULL,
-      actor_id TEXT NOT NULL,
+      intent_sha256 TEXT,
       expires_at TEXT NOT NULL,
       consumed_at TEXT NOT NULL
     );
   `);
-  // migration for pre-boundary roots that predate the principal column (LOCAL roots only)
+  // migration for pre-boundary/pre-1B local roots (LOCAL roots only; the public archive is never altered)
   try {
     db.exec("ALTER TABLE traces ADD COLUMN actor_id TEXT");
   } catch {
     // column already exists — no migration needed
   }
+  for (const col of ["local_control_principal_id", "producer_id", "evidence_domain", "artifact_hash", "evidence_version"]) {
+    try {
+      db.exec(`ALTER TABLE traces ADD COLUMN ${col} ${col === "evidence_version" ? "INTEGER" : "TEXT"}`);
+    } catch {
+      // column already exists — no migration needed
+    }
+  }
+}
+
+function traceColumns(): string[] {
+  try {
+    return (db.query("PRAGMA table_info(traces)").all() as Array<{ name: string }>).map((c) => c.name);
+  } catch {
+    return [];
+  }
 }
 
 /** Does the opened db carry the traces.actor_id column? (public snapshots of the archive do not) */
-export const HAS_ACTOR_COLUMN = (() => {
-  try {
-    const cols = (db.query("PRAGMA table_info(traces)").all() as Array<{ name: string }>).map((c) => c.name);
-    return cols.includes("actor_id");
-  } catch {
-    return false;
-  }
-})();
+export const HAS_ACTOR_COLUMN = traceColumns().includes("actor_id");
+
+/** Does the opened db carry the CONTROL-PLANE-SEAL-1B evidence v2 columns? (the archive does not) */
+export const HAS_EVIDENCE_V2 = ["local_control_principal_id", "producer_id", "evidence_domain", "artifact_hash", "evidence_version"].every((c) =>
+  traceColumns().includes(c),
+);
 
 export function one<T = any>(sql: string, ...params: unknown[]): T | null {
   return (db.query(sql).get(...params) as T) ?? null;

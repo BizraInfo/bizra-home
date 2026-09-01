@@ -1,0 +1,5 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · NONCE RACE STRESS — 100 two-request same-nonce races
+command: bun scripts/nonce-race.ts 100
+date: 2026-09-01T06:44:31Z
+{"ok":true,"races":100,"exactly_one_winner":100,"failed_races":0,"failures":[],"law":"one INSERT on the nonce PRIMARY KEY — exactly one winner per nonce, ever"}
+TRUE_EXIT_CODE=0

@@ -37,7 +37,7 @@ export default function Home() {
 
         <main className="flex-1">
           <Hero state={data} error={error} />
-          <Origin />
+          <Origin state={data} />
           <Fracture />
           <Loop state={data} />
           <Proof state={data} error={error} />

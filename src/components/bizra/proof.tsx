@@ -11,6 +11,7 @@
 import { useEffect, useState } from "react";
 import { Reveal, TruthChip, LiveDot } from "./shared";
 import { fmtUptime, fmtBytes, fmtStamp, truncHash } from "./format";
+import { classifyRuntime } from "./runtime-status";
 import type { Node0State, DemaEntry } from "@/components/node0/types";
 
 /* ---------------- small pieces ------------------------------------------ */
@@ -215,6 +216,7 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
   }, []);
 
   const live = state && !error && state.ok;
+  const reference = classifyRuntime(state?.runtime, live ? true : false) === "REFERENCE";
 
   return (
     <section
@@ -296,11 +298,11 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
                 </TileShell>
               </Reveal>
 
-              {/* Constitution — the root that not even the author may touch */}
+              {/* Constitution — the hash-sealed root */}
               <Reveal delay={0.14} className="lg:col-span-4">
                 <TileShell
                   title="Constitution — sealed root"
-                  chip="Immutable"
+                  chip="Hash-sealed"
                   chipTone="gold"
                   note={state.constitution.law}
                 >
@@ -397,13 +399,15 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
                 <div className="bz-glass grid grid-cols-2 divide-x divide-white/5 rounded-xl sm:grid-cols-4">
                   <div className="p-5 sm:p-6">
                     <p className="mb-2 font-mono text-[0.62rem] tracking-[0.18em] text-cream/50 uppercase">
-                      Uptime · boot {state.runtime.boot_count}
+                      {reference ? "Reference uptime" : "Uptime"} · boot {state.runtime.boot_count}
                     </p>
                     <p className="bz-num text-3xl text-gold-500 tabular-nums">
                       {live ? fmtUptime(state.runtime.started_at, now) : fmtUptime(state.runtime.started_at)}
                     </p>
                     <p className="mt-2 text-[0.72rem] font-light text-cream/40">
-                      sealed {fmtStamp(state.runtime.sealed_at)} · GST
+                      {reference
+                        ? "the read-only presentation process — not an active Node0"
+                        : `sealed ${fmtStamp(state.runtime.sealed_at)} · GST`}
                     </p>
                   </div>
                   <div className="p-5 sm:p-6">
@@ -446,8 +450,8 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
 
             <Reveal delay={0.12}>
               <p className="mx-auto max-w-3xl text-center font-mono text-[0.64rem] leading-relaxed tracking-[0.12em] text-cream/30 uppercase">
-                Source of truth · live runtime 127.0.0.1:7421 · polled every 2.5s ·
-                constitution {state.constitution.verified ? "verified" : "drift detected"} ·{" "}
+                Source of truth · {reference ? "sealed Node0 reference archive (read-only) 127.0.0.1:7421" : "live runtime 127.0.0.1:7421"} ·
+                polled every 2.5s · constitution {state.constitution.verified ? "hash-seal verified" : "drift detected"}{" · "}
                 {state.node0.spine.source_drift
                   ? "dev-mode source drift observed, honestly labeled"
                   : "spine aligned"}

@@ -1,0 +1,3 @@
+SUPERSEDED  mini-services/bizra-runtime/src/local-init.ts -> mini-services/bizra-runtime/src/init-control-key.ts (the 1A receipt claimed this file exists at sha256 1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9 — the hash matched an UNTRACKED, GIT-IGNORED disk file (.gitignore:43 'local-*'); it never entered the committed tree, so the 1A exact-head 19/19 GREEN was not reproducible from the committed source. CONTROL-PLANE-SEAL-1B replaces it with a non-ignored, Git-tracked initializer.; replacement present, 4630B)
+
+SUMMARY: 19 MATCH · 1 SUPERSEDED(verified replacement present) · 0 MISMATCH · 0 MISSING — manifest size 20 — verified at commit 4a72e29c

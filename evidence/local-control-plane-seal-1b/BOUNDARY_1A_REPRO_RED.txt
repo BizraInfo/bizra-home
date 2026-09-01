@@ -1,0 +1,59 @@
+===============================================================================
+RUN A — THE 1A SUITE AGAINST THE LIVE DISK (untracked ignored local-init.ts present)
+command: cd mini-services/bizra-runtime && bun test test/boundary.test.ts
+RESULT: 19 pass / 0 fail — TRUE EXIT CODE: 0
+THIS IS THE FALSE GREEN THE 1A RECEIPT SEALED: the test passed only because the
+git-ignored file exists on disk; it is absent from the committed tree.
+===============================================================================
+
+===============================================================================
+RUN B — THE 1A SUITE AGAINST THE COMMITTED TREE ONLY (git archive HEAD export)
+command: git archive HEAD -> clean export (node_modules copied, test-only); bun test test/boundary.test.ts
+RESULT: 18 pass / 1 fail — TRUE EXIT CODE: 1
+The failing test is 'local-init command' at boundary.test.ts:494-499:
+  spawnSync("bun", ["src/local-init.ts"]) -> Expected: 0, Received: 1
+  (src/local-init.ts does not exist in the committed tree — .gitignore:43 'local-*')
+Full failure body preserved below — exactly what the 1A red-run-output.txt should have contained.
+===============================================================================
+
+bun test v1.3.14 (0d9b296a)
+
+test/boundary.test.ts:
+(pass) R1 loopback binding > LOCAL mode with 0.0.0.0 must refuse to run [36.98ms]
+(pass) R1 loopback binding > LOCAL mode with ABSENT host must refuse (explicit loopback policy required) [33.11ms]
+(pass) R1 loopback binding > PUBLIC mode defaults to an explicit loopback bind and reports it [408.08ms]
+(pass) R2 caller-selected transport refused > runtime refuses any request carrying XTransformPort [406.19ms]
+(pass) R3 no wildcard CORS, foreign origin refused > no access-control-allow-origin is ever emitted [406.76ms]
+(pass) R3 no wildcard CORS, foreign origin refused > a request bearing a foreign Origin is refused before body processing [417.61ms]
+(pass) R4 read-only default in PUBLIC mode > unauthenticated POST /api/trace fails closed with zero state change [423.69ms]
+(pass) R4 read-only default in PUBLIC mode > unauthenticated POST /api/mission fails closed (no model call spent) [422.66ms]
+(pass) R5 action envelope required and fail-closed > envelope module implements bizra.node0.local_action_envelope.v1 [3.82ms]
+(pass) R5 action envelope required and fail-closed > route refuses missing/invalid/replayed envelopes; exactly one ingestion per nonce [420.11ms]
+(pass) R6 nonce atomicity under concurrency > two concurrent attempts with the same nonce yield exactly one winner [410.42ms]
+(pass) R7 trace provenance derived by server > external trace cannot claim internal labels; principal is the actor [436.70ms]
+(pass) R8 corroboration counts principals, not strings (in-process) > one actor under two labels is one corroborating principal [1.90ms]
+(pass) R8 corroboration counts principals, not strings (in-process) > kernel revert without authority mutates NOTHING (R10 kernel) [0.90ms]
+(pass) R9 /api/cycle cannot apply a transition in this slice > cycle POST fails closed; zero leases, transitions, receipts [428.66ms]
+(pass) R10 HTTP revert disabled this slice > HTTP revert refuses; zero state change [417.05ms]
+(pass) R11 liveness is emitted only after the listener binds > bind failure persists no BOOT/LIVE receipt in the state root [52.72ms]
+494 |     const res = spawnSync("bun", ["src/local-init.ts"], {
+495 |       cwd: SERVICE,
+496 |       env: { ...process.env, BIZRA_STATE_ROOT: root } as any,
+497 |       encoding: "utf8",
+498 |     });
+499 |     expect(res.status).toBe(0);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/1b-tools/clean-export/mini-services/bizra-runtime/test/boundary.test.ts:499:24)
+(fail) local-init command > generates a 0600 key outside the repo and prints only the key_id [5.49ms]
+(pass) source scan > no XTransformPort, no CORS wildcard, no Math.random in authority paths [0.65ms]
+
+ 18 pass
+ 1 fail
+ 84 expect() calls
+Ran 19 tests across 1 file. [4.77s]
+EXIT_CODE=0

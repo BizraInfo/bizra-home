@@ -1,0 +1,21 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/SUPERSEDE_1A/1",
+  "mission": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B",
+  "law": "supersede, never rewrite: the 1A receipt stays byte-identical; only its invalid claims are superseded here",
+  "entries": [
+    {
+      "superseded_path": "mini-services/bizra-runtime/src/local-init.ts",
+      "reason": "the 1A receipt claimed this file exists at sha256 1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9 — the hash matched an UNTRACKED, GIT-IGNORED disk file (.gitignore:43 'local-*'); it never entered the committed tree, so the 1A exact-head 19/19 GREEN was not reproducible from the committed source. CONTROL-PLANE-SEAL-1B replaces it with a non-ignored, Git-tracked initializer.",
+      "replacement_path": "mini-services/bizra-runtime/src/init-control-key.ts"
+    }
+  ],
+  "superseded_1a_claims": {
+    "committed_local_initializer_present": "SUPERSEDED — the replacement is tracked and reproducible",
+    "exact_head_suite_green": "REPAIRED — both suites green at the 1B implementation commit, from the committed tree",
+    "red_output_completeness": "REPAIRED — full failure bodies preserved in BOUNDARY_1A_REPRO_RED.txt and CONTROL_PLANE_1B_RED.txt",
+    "backup_copy_byte_identical_including_shm": "SUPERSEDED — -shm is ephemeral coordination state; the honest proof is a logical SQLite backup plus a chain walk (SQLITE_LOGICAL_BACKUP.db + SQLITE_RESTORE_VERIFY.json)",
+    "caller_actor_identity_equals_authenticated_principal": "SUPERSEDED — the principal is now resolved server-side from the key registry; caller actor_id is descriptive-only (or refused when it claims reserved labels)",
+    "public_reference_runtime_equals_active_node0": "SUPERSEDED — PUBLIC_REFERENCE now reports REFERENCE_ONLINE · node0_active=false · actions_enabled=false"
+  },
+  "preserved_1a_findings": "all other 1A findings stand: fixed same-origin transport, loopback-only binding, origin refusal, no CORS, atomic nonce claim, disabled one-call cycle/revert routes, authority-before-revert, bind-before-LIVE, public read-only snapshot, originals never opened for write"
+}

@@ -13,10 +13,19 @@ export type BusyKey = "mission" | "cycle" | "crash" | "trace" | "revert";
 
 const PHASES = ["CONSTRUCTION", "SEALED", "LIVE"] as const;
 
-function PhaseJourney({ phase, sealedAt }: { phase: string; sealedAt: string | null }) {
-  const current = Math.max(0, PHASES.indexOf(phase.toUpperCase() as (typeof PHASES)[number]));
+function PhaseJourney({ phase, sealedAt, reference }: { phase: string; sealedAt: string | null; reference: boolean }) {
+  // In reference mode the phase journey describes the ARCHIVED system's sealed
+  // history — labeled as such, never presented as a currently-active Node0.
+  const effective = reference ? "LIVE" : phase;
+  const current = Math.max(0, PHASES.indexOf(effective.toUpperCase() as (typeof PHASES)[number]));
   return (
-    <ol className="flex flex-wrap items-center gap-2" aria-label="Node0 phase journey">
+    <ol className="flex flex-wrap items-center gap-2" aria-label={reference ? "Archived Node0 phase journey (reference presentation — Node0 not active)" : "Node0 phase journey"}>
+      {reference ? (
+        <li className="flex items-center gap-2 rounded-sm border border-amber-500/50 bg-amber-500/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-amber-300">
+          <span className="size-1.5 rounded-full bg-amber-400" aria-hidden="true" />
+          ARCHIVED JOURNEY · REFERENCE
+        </li>
+      ) : null}
       {PHASES.map((p, i) => {
         const done = i < current;
         const active = i === current;
@@ -104,7 +113,7 @@ export function Hero({
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <PhaseJourney phase={runtime.phase} sealedAt={runtime.sealed_at} />
+          <PhaseJourney phase={runtime.phase} sealedAt={runtime.sealed_at} reference={runtime.mode === "PUBLIC_REFERENCE" || runtime.status === "REFERENCE_ONLINE"} />
           <div className="flex items-center gap-3 font-mono text-[11px] text-zinc-500">
             <span>
               uptime <span className="text-zinc-200">{fmtUptime(runtime.uptime_ms)}</span>

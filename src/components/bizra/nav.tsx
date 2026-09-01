@@ -9,6 +9,7 @@
 import { Github } from "lucide-react";
 import { SeedMark } from "./seed-mark";
 import { LiveDot } from "./shared";
+import { classifyRuntime, runtimeBadge, runtimeDotTone } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 const LINKS = [
@@ -22,8 +23,11 @@ const LINKS = [
 ];
 
 export function Nav({ state, error }: { state: Node0State | null; error: string | null }) {
-  const live = state && !error && state.runtime.status === "LIVE";
-  const halted = state?.runtime.status === "HALTED";
+  const reachable = state != null && !error;
+  const kind = classifyRuntime(state?.runtime, reachable);
+  const live = kind === "LIVE";
+  const reference = kind === "REFERENCE";
+  const halted = kind === "HALTED";
   const chainLen = state?.chain?.len;
 
   return (
@@ -64,14 +68,20 @@ export function Nav({ state, error }: { state: Node0State | null; error: string 
         </ul>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          {live ? (
+          {live || reference ? (
             <a
               href="#proof"
-              className="bz-focus inline-flex min-h-11 items-center gap-2.5 rounded-full border border-verdant/30 bg-navy-900/60 px-4 py-2 font-mono text-[0.6875rem] tracking-[0.18em] text-cream/85 uppercase backdrop-blur transition-colors hover:border-verdant/60"
-              aria-label={`Node0 is live — chain of ${chainLen ?? "?"} receipts verified. Jump to proof.`}
+              className={`bz-focus inline-flex min-h-11 items-center gap-2.5 rounded-full border bg-navy-900/60 px-4 py-2 font-mono text-[0.6875rem] tracking-[0.18em] text-cream/85 uppercase backdrop-blur transition-colors ${
+                live ? "border-verdant/30 hover:border-verdant/60" : "border-gold-500/30 hover:border-gold-500/60"
+              }`}
+              aria-label={
+                live
+                  ? `Node0 is live — chain of ${chainLen ?? "?"} receipts verified. Jump to proof.`
+                  : `Reference archive online — ${chainLen ?? "?"} receipts verified, Node0 not active (read-only presentation). Jump to proof.`
+              }
             >
-              <LiveDot />
-              <span className="hidden sm:inline text-verdant">LIVE</span>
+              <LiveDot tone={runtimeDotTone(kind)} />
+              <span className={`hidden sm:inline ${live ? "text-verdant" : "text-gold-400"}`}>{runtimeBadge(kind)}</span>
               <span className="text-cream/40" aria-hidden="true">·</span>
               <span>{chainLen != null ? `${chainLen} RCPT` : "NODE0"}</span>
             </a>

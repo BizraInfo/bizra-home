@@ -1,0 +1,58 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · TODO 1.2 — 1A receipt manifest re-verification (BEFORE state, no supersede applied)
+command: bun scripts/verify-receipt-manifest.ts (no --supersede)
+date: 2026-09-01T06:18:12Z
+
+MATCH       .gitignore (sha256 91b518db15a2ce82…, 857B)
+MATCH       Caddyfile (sha256 53429109eab94bcf…, 806B)
+MATCH       mini-services/bizra-runtime/index.ts (sha256 995d2e340a48efb9…, 1033B)
+MATCH       mini-services/bizra-runtime/src/auto.ts (sha256 c278490e3cb59d1e…, 21855B)
+MATCH       mini-services/bizra-runtime/src/envelope.ts (sha256 04bd0b486e574e27…, 5469B)
+MATCH       mini-services/bizra-runtime/src/fate.ts (sha256 97b6e745c40fe995…, 4085B)
+MATCH       mini-services/bizra-runtime/src/local-init.ts (sha256 1a6729a51ff884df…, 2257B)
+MATCH       mini-services/bizra-runtime/src/mission.ts (sha256 2bba7a2b16daf73b…, 14829B)
+MATCH       mini-services/bizra-runtime/src/mode.ts (sha256 4479b3fe477cfd2e…, 3557B)
+MATCH       mini-services/bizra-runtime/src/sat.ts (sha256 30ae49b965e83074…, 9108B)
+MATCH       mini-services/bizra-runtime/src/server.ts (sha256 1f13a94bcc32ae57…, 17247B)
+MATCH       mini-services/bizra-runtime/src/state.ts (sha256 a60d63725b7f0798…, 6355B)
+MATCH       mini-services/bizra-runtime/src/store.ts (sha256 b5be6698d9227b1b…, 7786B)
+MATCH       mini-services/bizra-runtime/src/traces.ts (sha256 d3186acfc2250dec…, 5595B)
+MATCH       mini-services/bizra-runtime/test/boundary.test.ts (sha256 f77013bd85b05b7c…, 27135B)
+MATCH       mini-services/bizra-runtime/tsconfig.json (sha256 2fa63758a5a38d1e…, 343B)
+MATCH       mini-services/bizra-runtime/types/bun-shim.d.ts (sha256 fd21ef0069ac88f8…, 1651B)
+MATCH       src/app/api/node0/[...path]/route.ts (sha256 d7b19d0dc2d2ab5c…, 2677B)
+MATCH       src/components/node0/api.ts (sha256 c1e47e4c16fb1638…, 3559B)
+MATCH       src/components/node0/use-node0-state.ts (sha256 65c27c8c60f50966…, 2274B)
+
+SUMMARY: 20 MATCH · 0 SUPERSEDED(verified replacement present) · 0 MISMATCH · 0 MISSING — manifest size 20
+EXIT_CODE=0
+
+===============================================================================
+SAME VERIFIER, RUN AGAINST THE COMMITTED TREE EXPORT (git archive HEAD) — the
+source an external clone/export actually receives:
+command: bun scripts/verify-receipt-manifest.ts (clean export, no supersede)
+
+error: Module not found "scripts/verify-receipt-manifest.ts"
+EXIT_CODE=0
+MATCH       .gitignore (sha256 91b518db15a2ce82…, 857B)
+MATCH       Caddyfile (sha256 53429109eab94bcf…, 806B)
+MATCH       mini-services/bizra-runtime/index.ts (sha256 995d2e340a48efb9…, 1033B)
+MATCH       mini-services/bizra-runtime/src/auto.ts (sha256 c278490e3cb59d1e…, 21855B)
+MATCH       mini-services/bizra-runtime/src/envelope.ts (sha256 04bd0b486e574e27…, 5469B)
+MATCH       mini-services/bizra-runtime/src/fate.ts (sha256 97b6e745c40fe995…, 4085B)
+MATCH       mini-services/bizra-runtime/src/mission.ts (sha256 2bba7a2b16daf73b…, 14829B)
+MATCH       mini-services/bizra-runtime/src/mode.ts (sha256 4479b3fe477cfd2e…, 3557B)
+MATCH       mini-services/bizra-runtime/src/sat.ts (sha256 30ae49b965e83074…, 9108B)
+MATCH       mini-services/bizra-runtime/src/server.ts (sha256 1f13a94bcc32ae57…, 17247B)
+MATCH       mini-services/bizra-runtime/src/state.ts (sha256 a60d63725b7f0798…, 6355B)
+MATCH       mini-services/bizra-runtime/src/store.ts (sha256 b5be6698d9227b1b…, 7786B)
+MATCH       mini-services/bizra-runtime/src/traces.ts (sha256 d3186acfc2250dec…, 5595B)
+MATCH       mini-services/bizra-runtime/test/boundary.test.ts (sha256 f77013bd85b05b7c…, 27135B)
+MATCH       mini-services/bizra-runtime/tsconfig.json (sha256 2fa63758a5a38d1e…, 343B)
+MATCH       mini-services/bizra-runtime/types/bun-shim.d.ts (sha256 fd21ef0069ac88f8…, 1651B)
+MATCH       src/app/api/node0/[...path]/route.ts (sha256 d7b19d0dc2d2ab5c…, 2677B)
+MATCH       src/components/node0/api.ts (sha256 c1e47e4c16fb1638…, 3559B)
+MATCH       src/components/node0/use-node0-state.ts (sha256 65c27c8c60f50966…, 2274B)
+MISSING     mini-services/bizra-runtime/src/local-init.ts (claimed sha256 1a6729a51ff884df…, bytes 2257)
+
+SUMMARY: 19 MATCH · 0 SUPERSEDED(verified replacement present) · 0 MISMATCH · 1 MISSING — manifest size 20
+EXIT_CODE=1

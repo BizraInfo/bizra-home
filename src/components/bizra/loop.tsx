@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { Reveal } from "./shared";
+import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 interface Stop {
@@ -75,6 +76,7 @@ const STOPS: Stop[] = [
 
 export function Loop({ state }: { state: Node0State | null }) {
   const [step, setStep] = useState(0);
+  const reference = classifyRuntime(state?.runtime, state && state.ok ? true : false) === "REFERENCE";
 
   useEffect(() => {
     const id = setInterval(() => setStep((s) => (s + 1) % STOPS.length), 1600);
@@ -102,9 +104,9 @@ export function Loop({ state }: { state: Node0State | null }) {
           </Reveal>
           <Reveal delay={0.16}>
             <p className="mx-auto mt-5 max-w-2xl text-base font-light leading-relaxed text-cream/55">
-              Nothing acts without consent. Nothing is rewarded without proof. The loop
-              below is not a diagram — it is running now, and each stop carries its own
-              live measurement.
+              {reference
+                ? "Nothing acts without consent. Nothing is rewarded without proof. The loop below is the sealed record of a system that ran under this law — each stop carries its own measured value, read from the reference archive."
+                : "Nothing acts without consent. Nothing is rewarded without proof. The loop below is not a diagram — it is running now, and each stop carries its own live measurement."}
             </p>
           </Reveal>
         </div>

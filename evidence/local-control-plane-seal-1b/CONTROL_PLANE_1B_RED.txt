@@ -1,0 +1,298 @@
+bun test v1.3.14 (0d9b296a)
+
+test/control-plane-seal-1b.test.ts:
+214 | describe("RF reproducibility of the 1A proof", () => {
+215 |   test("RF-01 every path in the 1A receipt manifest resolves and hashes correctly (at the 1A implementation commit, missing entry superseded)", () => {
+216 |     const res = spawnSync("bun", ["scripts/verify-receipt-manifest.ts", "--at-commit", IMPL_COMMIT_1A, "--supersede", join(EVIDENCE, "SUPERSEDE_1A.json")], {
+217 |       cwd: SERVICE, encoding: "utf8", timeout: 30000,
+218 |     });
+219 |     expect(res.status).toBe(0);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:219:24)
+(fail) RF reproducibility of the 1A proof > RF-01 every path in the 1A receipt manifest resolves and hashes correctly (at the 1A implementation commit, missing entry superseded) [26.76ms]
+227 |     const path = "mini-services/bizra-runtime/src/init-control-key.ts";
+228 |     const ignored = spawnSync("git", ["-C", REPO, "check-ignore", path], { encoding: "utf8" });
+229 |     expect(ignored.status).not.toBe(0); // not ignored
+230 |     expect((ignored.stdout ?? "").trim()).toBe("");
+231 |     const tracked = spawnSync("git", ["-C", REPO, "ls-files", "--error-unmatch", path], { encoding: "utf8" });
+232 |     expect(tracked.status).toBe(0); // in the index/committed
+                                 ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:232:28)
+(fail) RF reproducibility of the 1A proof > RF-02 the local control-key initializer is tracked by Git and not ignored [2.71ms]
+237 |     const repro = readFileSync(join(EVIDENCE, "BOUNDARY_1A_REPRO_RED.txt"), "utf8");
+238 |     expect(repro.length).toBeGreaterThan(500);
+239 |     expect(repro).toMatch(/\(fail\)/);
+240 |     expect(repro).toMatch(/\(pass\)/);
+241 |     expect(repro).toMatch(/local-init/);
+242 |     const red = readFileSync(join(EVIDENCE, "CONTROL_PLANE_1B_RED.txt"), "utf8");
+                      ^
+error: ENOENT: no such file or directory, open '/home/z/my-project/evidence/local-control-plane-seal-1b/CONTROL_PLANE_1B_RED.txt'
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:242:17)
+(fail) RF reproducibility of the 1A proof > RF-03 preserved test outputs contain full pass/fail bodies, not only a tool banner [0.45ms]
+250 | // ---------------------------------------------------------------------------
+251 | describe("PB local control principal binding", () => {
+252 |   test("PB-01 one key signing actor_id 'alice' and 'bob' resolves to ONE authoritative local-control principal", async () => {
+253 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+254 |     const init = initControlKey(b.root);
+255 |     expect(init.code).toBe(0);
+                            ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:255:23)
+(fail) PB local control principal binding > PB-01 one key signing actor_id 'alice' and 'bob' resolves to ONE authoritative local-control principal [412.45ms]
+280 | 
+281 |   test("PB-02 one key cannot claim SAT-1, runtime, DEMA, another registered principal, or reserved labels", async () => {
+282 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+283 |     initControlKey(b.root);
+284 |     const keyId = keyIdOf(b.root)!;
+285 |     const key = keyBytesOf(b.root, keyId);
+                      ^
+ENOENT: no such file or directory, open '/tmp/bizra-1b-root-AM4bLT/keys/null.key'
+    path: "/tmp/bizra-1b-root-AM4bLT/keys/null.key",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:285:17)
+(fail) PB local control principal binding > PB-02 one key cannot claim SAT-1, runtime, DEMA, another registered principal, or reserved labels [410.78ms]
+309 |   }, 40000);
+310 | 
+311 |   test("PB-03 unknown key_id refuses with ZERO mutation (nonce, trace, receipt, mission, state)", async () => {
+312 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+313 |     initControlKey(b.root);
+314 |     const realKey = keyBytesOf(b.root, keyIdOf(b.root)!);
+                          ^
+ENOENT: no such file or directory, open '/tmp/bizra-1b-root-mevqOL/keys/null.key'
+    path: "/tmp/bizra-1b-root-mevqOL/keys/null.key",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:314:21)
+(fail) PB local control principal binding > PB-03 unknown key_id refuses with ZERO mutation (nonce, trace, receipt, mission, state) [411.77ms]
+331 | 
+332 |   test("PB-04 the browser never receives the HMAC secret; no generic sign-arbitrary-payload endpoint exists", async () => {
+333 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+334 |     initControlKey(b.root);
+335 |     const keyId = keyIdOf(b.root)!;
+336 |     const key = keyBytesOf(b.root, keyId);
+                      ^
+ENOENT: no such file or directory, open '/tmp/bizra-1b-root-7h9dMq/keys/null.key'
+    path: "/tmp/bizra-1b-root-7h9dMq/keys/null.key",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:336:17)
+(fail) PB local control principal binding > PB-04 the browser never receives the HMAC secret; no generic sign-arbitrary-payload endpoint exists [410.33ms]
+360 | 
+361 |   test("PB-05 local-control identity is explicitly LOCAL_CAPABILITY_ONLY — never the canonical principal", async () => {
+362 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+363 |     initControlKey(b.root);
+364 |     const keyId = keyIdOf(b.root)!;
+365 |     const rec: any = readRegistry(b.root)!.entries.find((e: any) => e.key_id === keyId)!;
+                                              ^
+TypeError: null is not an object (evaluating 'readRegistry(b.root).entries')
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:365:41)
+(fail) PB local control principal binding > PB-05 local-control identity is explicitly LOCAL_CAPABILITY_ONLY — never the canonical principal [410.82ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe ev01_tamper failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:387:19)
+(fail) EV evidence binding > EV-01 the trace digest binds ALL decision-bearing fields — tampering any one breaks verification [7.62ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe ev02_legacy failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:398:19)
+(fail) EV evidence binding > EV-02 archived v1 traces are readable history but cannot satisfy a v2 corroboration decision [8.83ms]
+404 | 
+405 |   test("EV-03 caller-supplied source/producer/domain/principal/actor/role/agent fields are descriptive-only or refused", async () => {
+406 |     const b = await bootRuntime({ mode: "LOCAL_FOUNDER", host: "127.0.0.1" });
+407 |     initControlKey(b.root);
+408 |     const keyId = keyIdOf(b.root)!;
+409 |     const key = keyBytesOf(b.root, keyId);
+                      ^
+ENOENT: no such file or directory, open '/tmp/bizra-1b-root-vkcSzF/keys/null.key'
+    path: "/tmp/bizra-1b-root-vkcSzF/keys/null.key",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:409:17)
+(fail) EV evidence binding > EV-03 caller-supplied source/producer/domain/principal/actor/role/agent fields are descriptive-only or refused [413.34ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe co01_labels failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:444:19)
+(fail) CO corroboration by trusted producer/domain > CO-01 one bound local principal under ten labels counts as ONE operator evidence domain [5.70ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe co02_same_artifact failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:452:19)
+(fail) CO corroboration by trusted producer/domain > CO-02 the same artifact hash resubmitted under different labels or nonces adds no corroboration weight [4.23ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe co03_repeat_domain failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:460:19)
+(fail) CO corroboration by trusted producer/domain > CO-03 repeated observations from the same producer/domain count once for independence [3.71ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe co04_two_domains failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:468:19)
+(fail) CO corroboration by trusted producer/domain > CO-04 two distinct trusted producer/domains with distinct artifact hashes satisfy a two-source rule [3.63ms]
+181 |     cwd: SERVICE,
+182 |     env: { ...process.env, BIZRA_STATE_ROOT: root, BIZRA_RUNTIME_MODE: "LOCAL_FOUNDER", BIZRA_BIND_HOST: "127.0.0.1", BIZRA_PORT: String(nextPort()) } as any,
+183 |     encoding: "utf8",
+184 |     timeout: 40000,
+185 |   });
+186 |   if (res.status !== 0) throw new Error(`kernel-probe ${scenario} failed: ${(res.stderr || res.stdout || "").slice(-500)}`);
+                                                                                                                                ^
+error: kernel-probe co05_n1 failed: error: Module not found "scripts/kernel-probe.ts"
+
+      at kernelProbe (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:186:123)
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:476:19)
+(fail) CO corroboration by trusted producer/domain > CO-05 Node0/N=1 never pretends one HMAC key represents multiple humans [3.44ms]
+487 | describe("TL truthful status projection", () => {
+488 |   test("TL-01 PUBLIC_REFERENCE health/state: REFERENCE_ONLINE · node0_active=false · actions_enabled=false — never LIVE", async () => {
+489 |     const b = await bootRuntime({ mode: "PUBLIC_REFERENCE" });
+490 |     const health = await jsonOf(await get(b.base, "/api/health"));
+491 |     expect(health.mode).toBe("PUBLIC_REFERENCE");
+492 |     expect(health.status).toBe("REFERENCE_ONLINE");
+                                ^
+error: expect(received).toBe(expected)
+
+Expected: "REFERENCE_ONLINE"
+Received: "LIVE"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:492:27)
+(fail) TL truthful status projection > TL-01 PUBLIC_REFERENCE health/state: REFERENCE_ONLINE · node0_active=false · actions_enabled=false — never LIVE [405.50ms]
+502 |     expect(st.runtime.mode).toBe("PUBLIC_REFERENCE");
+503 |   }, 40000);
+504 | 
+505 |   test("TL-02 public Home displays REFERENCE ARCHIVE ONLINE — never NODE0 LIVE in reference mode", async () => {
+506 |     const mod: any = await import("../../../src/components/bizra/runtime-status").catch(() => null);
+507 |     expect(mod).not.toBeNull();
+                          ^
+error: expect(received).not.toBeNull()
+
+Received: null
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:507:21)
+(fail) TL truthful status projection > TL-02 public Home displays REFERENCE ARCHIVE ONLINE — never NODE0 LIVE in reference mode [0.98ms]
+527 |     expect(offenders).toEqual([]);
+528 |   }, 20000);
+529 | 
+530 |   test("TL-03 only LOCAL_FOUNDER + bound + commissioned (node0_active=true) displays NODE0 LIVE", async () => {
+531 |     const mod: any = await import("../../../src/components/bizra/runtime-status").catch(() => null);
+532 |     expect(mod).not.toBeNull();
+                          ^
+error: expect(received).not.toBeNull()
+
+Received: null
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:532:21)
+(fail) TL truthful status projection > TL-03 only LOCAL_FOUNDER + bound + commissioned (node0_active=true) displays NODE0 LIVE [0.34ms]
+543 |   }, 40000);
+544 | 
+545 |   test("TL-04 constitutional copy claims hash-sealing and drift detection — no physical immutability claim", async () => {
+546 |     const b = await bootRuntime({ mode: "PUBLIC_REFERENCE" });
+547 |     const st = await stateOf(b.base);
+548 |     expect(st.constitution.law).toMatch(/hash-sealed/i);
+                                      ^
+error: expect(received).toMatch(expected)
+
+Expected substring or pattern: /hash-sealed/i
+Received: "the 3 root files are sealed — unchangeable even by their author; any byte drift halts the engine"
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:548:33)
+(fail) TL truthful status projection > TL-04 constitutional copy claims hash-sealing and drift detection — no physical immutability claim [413.82ms]
+572 |     const root = seedRoot();
+573 |     const out = join(root, "logical-backup.db");
+574 |     const res = spawnSync("bun", ["scripts/logical-backup.ts", "--source", join(root, "state"), "--out", out], {
+575 |       cwd: SERVICE, encoding: "utf8", timeout: 60000,
+576 |     });
+577 |     expect(res.status).toBe(0);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:577:24)
+(fail) BK backup semantics > BK-01 a logically consistent SQLite backup restores 33/33 chain records and the exact chain head [5.77ms]
+591 |     const root = seedRoot();
+592 |     const out = join(root, "logical-backup.db");
+593 |     const res = spawnSync("bun", ["scripts/logical-backup.ts", "--source", join(root, "state"), "--out", out], {
+594 |       cwd: SERVICE, encoding: "utf8", timeout: 60000,
+595 |     });
+596 |     expect(res.status).toBe(0);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 0
+Received: 1
+
+      at <anonymous> (/home/z/my-project/mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts:596:24)
+(fail) BK backup semantics > BK-02 -shm is recorded as ephemeral coordination state and excluded from immutable backup identity [4.49ms]
+(pass) BK backup semantics > BK-03 the original archive db, wal, and shm hashes remain unchanged [3.48ms]
+
+ 1 pass
+ 22 fail
+ 22 expect() calls
+Ran 23 tests across 1 file. [3.40s]
+EXIT_CODE=1

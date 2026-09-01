@@ -1,0 +1,57 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · COMBINED_TESTS (boundary 1A + control-plane 1B)
+command: bun test test/*.test.ts
+note: run while the live PUBLIC_REFERENCE runtime held 127.0.0.1:7421 — suites are hermetic
+date: 2026-09-01T06:46:04Z
+bun test v1.3.14 (0d9b296a)
+
+test/control-plane-seal-1b.test.ts:
+(pass) RF reproducibility of the 1A proof > RF-01 every path in the 1A receipt manifest resolves and hashes correctly (at the 1A implementation commit, missing entry superseded) [57.88ms]
+(pass) RF reproducibility of the 1A proof > RF-02 the local control-key initializer is tracked by Git and not ignored [2.64ms]
+(pass) RF reproducibility of the 1A proof > RF-03 preserved test outputs contain full pass/fail bodies, not only a tool banner [0.24ms]
+(pass) PB local control principal binding > PB-01 one key signing actor_id 'alice' and 'bob' resolves to ONE authoritative local-control principal [446.92ms]
+(pass) PB local control principal binding > PB-02 one key cannot claim SAT-1, runtime, DEMA, another registered principal, or reserved labels [454.94ms]
+(pass) PB local control principal binding > PB-03 unknown key_id refuses with ZERO mutation (nonce, trace, receipt, mission, state) [448.32ms]
+(pass) PB local control principal binding > PB-04 the browser never receives the HMAC secret; no generic sign-arbitrary-payload endpoint exists [454.17ms]
+(pass) PB local control principal binding > PB-05 local-control identity is explicitly LOCAL_CAPABILITY_ONLY — never the canonical principal [446.71ms]
+(pass) EV evidence binding > EV-01 the trace digest binds ALL decision-bearing fields — tampering any one breaks verification [60.61ms]
+(pass) EV evidence binding > EV-02 archived v1 traces are readable history but cannot satisfy a v2 corroboration decision [35.55ms]
+(pass) EV evidence binding > EV-03 caller-supplied source/producer/domain/principal/actor/role/agent fields are descriptive-only or refused [443.07ms]
+(pass) CO corroboration by trusted producer/domain > CO-01 one bound local principal under ten labels counts as ONE operator evidence domain [40.73ms]
+(pass) CO corroboration by trusted producer/domain > CO-02 the same artifact hash resubmitted under different labels or nonces adds no corroboration weight [36.74ms]
+(pass) CO corroboration by trusted producer/domain > CO-03 repeated observations from the same producer/domain count once for independence [36.73ms]
+(pass) CO corroboration by trusted producer/domain > CO-04 two distinct trusted producer/domains with distinct artifact hashes satisfy a two-source rule [35.65ms]
+(pass) CO corroboration by trusted producer/domain > CO-05 Node0/N=1 never pretends one HMAC key represents multiple humans [36.21ms]
+(pass) TL truthful status projection > TL-01 PUBLIC_REFERENCE health/state: REFERENCE_ONLINE · node0_active=false · actions_enabled=false — never LIVE [413.81ms]
+(pass) TL truthful status projection > TL-02 public Home displays REFERENCE ARCHIVE ONLINE — never NODE0 LIVE in reference mode [2.23ms]
+(pass) TL truthful status projection > TL-03 only LOCAL_FOUNDER + bound + commissioned (node0_active=true) displays NODE0 LIVE [406.30ms]
+(pass) TL truthful status projection > TL-04 constitutional copy claims hash-sealing and drift detection — no physical immutability claim [414.46ms]
+(pass) BK backup semantics > BK-01 a logically consistent SQLite backup restores 33/33 chain records and the exact chain head [33.57ms]
+(pass) BK backup semantics > BK-02 -shm is recorded as ephemeral coordination state and excluded from immutable backup identity [32.12ms]
+(pass) BK backup semantics > BK-03 the original archive db, wal, and shm hashes remain unchanged [3.10ms]
+
+test/boundary.test.ts:
+(pass) R1 loopback binding > LOCAL mode with 0.0.0.0 must refuse to run [34.29ms]
+(pass) R1 loopback binding > LOCAL mode with ABSENT host must refuse (explicit loopback policy required) [32.82ms]
+(pass) R1 loopback binding > PUBLIC mode defaults to an explicit loopback bind and reports it [406.42ms]
+(pass) R2 caller-selected transport refused > runtime refuses any request carrying XTransformPort [406.89ms]
+(pass) R3 no wildcard CORS, foreign origin refused > no access-control-allow-origin is ever emitted [408.63ms]
+(pass) R3 no wildcard CORS, foreign origin refused > a request bearing a foreign Origin is refused before body processing [422.28ms]
+(pass) R4 read-only default in PUBLIC mode > unauthenticated POST /api/trace fails closed with zero state change [431.92ms]
+(pass) R4 read-only default in PUBLIC mode > unauthenticated POST /api/mission fails closed (no model call spent) [437.81ms]
+(pass) R5 action envelope required and fail-closed > envelope module implements bizra.node0.local_action_envelope.v1.1 (method+path-bound, principal server-resolved) [4.02ms]
+(pass) R5 action envelope required and fail-closed > route refuses missing/invalid/replayed envelopes; exactly one ingestion per nonce [424.68ms]
+(pass) R6 nonce atomicity under concurrency > two concurrent attempts with the same nonce yield exactly one winner [415.31ms]
+(pass) R7 trace provenance derived by server > external trace cannot claim internal labels; principal is the actor [433.73ms]
+(pass) R8 corroboration counts principals, not strings (in-process) > one actor under two labels is one corroborating domain (v2 evidence) [2.01ms]
+(pass) R8 corroboration counts principals, not strings (in-process) > kernel revert without authority mutates NOTHING (R10 kernel) [0.70ms]
+(pass) R9 /api/cycle cannot apply a transition in this slice > cycle POST fails closed; zero leases, transitions, receipts [418.34ms]
+(pass) R10 HTTP revert disabled this slice > HTTP revert refuses; zero state change [416.96ms]
+(pass) R11 liveness is emitted only after the listener binds > bind failure persists no BOOT/LIVE receipt in the state root [45.80ms]
+(pass) init-control-key command > generates a 0600 key outside the repo, binds the principal registry, and prints only non-secret identifiers [110.80ms]
+(pass) source scan > no XTransformPort, no CORS wildcard, no Math.random in authority paths [0.78ms]
+
+ 42 pass
+ 0 fail
+ 283 expect() calls
+Ran 42 tests across 2 files. [9.24s]
+TRUE_EXIT_CODE=0

@@ -6,8 +6,9 @@
  * after all four clauses pass. SAT never checks semantics; semantic risk is carried
  * honestly by reversibility, not by pretending a grader understands intent.
  */
-import { all, one, run, HAS_ACTOR_COLUMN } from "./store";
+import { all, one, run, HAS_ACTOR_COLUMN, HAS_EVIDENCE_V2 } from "./store";
 import { sha256obj, nowIso } from "./hash";
+import { verifyTraceSeal } from "./traces";
 
 const URL_OR_IP = /(https?:\/\/|ftp:\/\/|(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)|[A-Za-z0-9+/]{80,}={0,2})/;
 
@@ -85,20 +86,22 @@ export function verifyDiagnosticContract(input: DiagnosticInput): SatVerdict {
   const clauses: Record<string, { pass: boolean; detail: string }> = {};
 
   // 1. PROVENANCE — every cited trace exists, was admitted, and its seal is intact.
+  //    CONTROL-PLANE-SEAL-1B: the seal is VERSION-AWARE — v2 evidence rows verify
+  //    with the 10-field digest (principal/producer/domain/artifact bound),
+  //    v1 archive rows verify with the 5-field historical digest.
   const provenanceDetails: string[] = [];
-  const citedRows: { id: number; source: string; sha256: string; admissible: number; ts: string; actor_id: string | null; kind: string; correlation: string | null; payload: string }[] = [];
+  const traceCols = HAS_ACTOR_COLUMN
+    ? `id, ts, source, kind, correlation, payload, sha256, admissible, actor_id${HAS_EVIDENCE_V2 ? ", local_control_principal_id, producer_id, evidence_domain, artifact_hash, evidence_version" : ", NULL AS local_control_principal_id, NULL AS producer_id, NULL AS evidence_domain, NULL AS artifact_hash, NULL AS evidence_version"}`
+    : `id, ts, source, kind, correlation, payload, sha256, admissible, NULL AS actor_id, NULL AS local_control_principal_id, NULL AS producer_id, NULL AS evidence_domain, NULL AS artifact_hash, NULL AS evidence_version`;
+  const citedRows: { id: number; source: string; sha256: string; admissible: number; ts: string; actor_id: string | null; kind: string; correlation: string | null; payload: string; local_control_principal_id: string | null; producer_id: string | null; evidence_domain: string | null; artifact_hash: string | null; evidence_version: number | null }[] = [];
   let provenancePass = input.citedTraces.length > 0;
   const seen = new Set<number>();
-  const traceCols = HAS_ACTOR_COLUMN
-    ? "id, ts, source, kind, correlation, payload, sha256, admissible, actor_id"
-    : "id, ts, source, kind, correlation, payload, sha256, admissible, NULL AS actor_id";
   for (const id of input.citedTraces) {
     if (seen.has(id)) { provenancePass = false; provenanceDetails.push(`#${id} duplicated`); continue; }
     seen.add(id);
     const row = one<any>(`SELECT ${traceCols} FROM traces WHERE id = ?`, id);
     if (!row) { provenancePass = false; provenanceDetails.push(`#${id} does not exist (invented citation)`); continue; }
-    const recompute = sha256obj({ ts: row.ts, source: row.source, kind: row.kind, correlation: row.correlation, payload: row.payload });
-    if (recompute !== row.sha256) { provenancePass = false; provenanceDetails.push(`#${id} seal mismatch`); continue; }
+    if (!verifyTraceSeal(row)) { provenancePass = false; provenanceDetails.push(`#${id} seal mismatch (v${row.evidence_version ?? 1} digest)`); continue; }
     if (!row.admissible) { provenancePass = false; provenanceDetails.push(`#${id} is inadmissible evidence`); continue; }
     citedRows.push(row);
   }
@@ -129,18 +132,57 @@ export function verifyDiagnosticContract(input: DiagnosticInput): SatVerdict {
   if (cat && input.catalog.filter((c) => c.key === input.targetContract).length !== 1) { disambiguationPass = false; disDetails.push("ambiguous catalog resolution"); }
   clauses.disambiguation = { pass: disambiguationPass, detail: disDetails.length ? disDetails.join("; ") : `unique target ${input.targetContract}, typed numeric transition` };
 
-  // 4. CORROBORATION — independent PRINCIPALS, not volume and not source strings.
-  // BOUNDARY-1A §2.7: an external trace's principal is its authenticated actor_id;
-  // internal traces carry no actor — their principal is their internal call site.
-  // One actor under many labels is still one principal. Volume is not independence.
-  const principals = new Set(citedRows.map((r) => r.actor_id ?? `internal:${r.source}`));
-  const corroborationPass = principals.size >= input.corroborationMin;
-  clauses.corroboration = {
-    pass: corroborationPass,
-    detail: corroborationPass
-      ? `${principals.size} distinct principal(s) ([${[...principals].join(", ")}]) >= floor ${input.corroborationMin}`
-      : `only ${principals.size} distinct principal(s) ([${[...principals].join(", ")}]) — floor is ${input.corroborationMin}; one actor under many labels is one principal; volume is not independence`,
-  };
+  // 4. CORROBORATION — trusted producer/domain independence, not volume and not caller strings.
+  // CONTROL-PLANE-SEAL-1B law (replaces the 1A actor_id-counting, which one HMAC
+  // key could manufacture):
+  //   - the independence unit is the SERVER-DERIVED pair producer_id:evidence_domain;
+  //   - only v2 evidence rows are eligible (legacy v1 rows are readable history
+  //     but cannot satisfy a new authoritative corroboration decision);
+  //   - a domain counts toward independence only if it contributes at least one
+  //     artifact hash not already claimed by a counted domain — the same
+  //     artifact resubmitted (under any labels or nonces) adds no weight;
+  //   - repeated observations from the same producer/domain count once;
+  //   - at Node0/N=1 one HMAC key is one operator evidence domain — never
+  //     multiple humans.
+  const domainOrder: string[] = [];
+  const domainMap = new Map<string, { producer: string; domain: string; hashes: Set<string>; principals: Set<string | null> }>();
+  let legacyCount = 0;
+  for (const r of citedRows) {
+    if ((r.evidence_version ?? 1) < 2 || !r.producer_id || !r.evidence_domain) {
+      legacyCount++;
+      continue; // v1 trace — readable, but not corroboration-eligible
+    }
+    const key = `${r.producer_id}:${r.evidence_domain}`;
+    if (!domainMap.has(key)) {
+      domainMap.set(key, { producer: r.producer_id, domain: r.evidence_domain, hashes: new Set(), principals: new Set() });
+      domainOrder.push(key);
+    }
+    const entry = domainMap.get(key)!;
+    if (r.artifact_hash) entry.hashes.add(r.artifact_hash);
+    entry.principals.add(r.local_control_principal_id ?? null);
+  }
+  // greedy novel-artifact counting: a domain counts only if it brings a hash not yet claimed
+  let independence = 0;
+  const claimedHashes = new Set<string>();
+  const countedDomains: string[] = [];
+  for (const key of domainOrder) {
+    const e = domainMap.get(key)!;
+    const novel = [...e.hashes].find((h) => !claimedHashes.has(h));
+    if (novel !== undefined) {
+      independence++;
+      countedDomains.push(key);
+      for (const h of e.hashes) claimedHashes.add(h);
+    }
+  }
+  const corroborationPass = independence >= input.corroborationMin;
+  const detailParts: string[] = [];
+  if (legacyCount > 0) detailParts.push(`${legacyCount} cited trace(s) are v1 legacy evidence — readable history, ineligible for v2 corroboration`);
+  detailParts.push(
+    corroborationPass
+      ? `${independence} independent trusted evidence domain(s) ([${countedDomains.join(", ")}]) >= floor ${input.corroborationMin}`
+      : `only ${independence} independent trusted evidence domain(s) ([${countedDomains.join(", ")}]${domainOrder.length ? "" : " none"}]) — floor is ${input.corroborationMin}; independence is producer:domain, never caller labels; one key is one domain; the same artifact adds no weight`,
+  );
+  clauses.corroboration = { pass: corroborationPass, detail: detailParts.join("; ") };
 
   const failed = Object.entries(clauses).filter(([, v]) => !v.pass).map(([k]) => k);
   const status: "PASS" | "FAIL" = failed.length === 0 ? "PASS" : "FAIL";

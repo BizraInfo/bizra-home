@@ -11,10 +11,15 @@
 import { SeedMark } from "./seed-mark";
 import { LiveDot } from "./shared";
 import { truncHash } from "./format";
+import { classifyRuntime, runtimeLabel, runtimeDotTone, NODE0_ACTIVE_FALSE_LABEL } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Hero({ state, error }: { state: Node0State | null; error: string | null }) {
-  const live = state && !error && state.runtime.status === "LIVE";
+  const reachable = state != null && !error;
+  const kind = classifyRuntime(state?.runtime, reachable);
+  const live = kind === "LIVE";
+  const reference = kind === "REFERENCE";
+  const dotTone = runtimeDotTone(kind);
   const chainLen = state?.chain?.len;
   const chainOk = state?.chain?.ok;
   const rootHash = state?.constitution?.root_hash;
@@ -93,11 +98,15 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
         role="status"
         aria-live="off"
       >
-        {live ? (
+        {reachable && kind !== "READING" ? (
           <>
-            <span className="inline-flex items-center gap-2.5 text-verdant">
-              <LiveDot />
-              NODE0 LIVE
+            <span
+              className={`inline-flex items-center gap-2.5 ${
+                live ? "text-verdant" : reference ? "text-gold-400" : "text-cream/70"
+              }`}
+            >
+              <LiveDot tone={dotTone} />
+              {runtimeLabel(kind)}
             </span>
             <span className="text-cream/25" aria-hidden="true">·</span>
             <span className="text-cream/60">
@@ -106,6 +115,12 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
                 {chainOk ? "VERIFIED" : "BROKEN"}
               </span>
             </span>
+            {reference ? (
+              <>
+                <span className="text-cream/25" aria-hidden="true">·</span>
+                <span className="text-cream/50">{NODE0_ACTIVE_FALSE_LABEL}</span>
+              </>
+            ) : null}
             <span className="text-cream/25" aria-hidden="true">·</span>
             <span className="text-gold-500/80">ROOT {truncHash(rootHash, 10)}</span>
             <span className="text-cream/25" aria-hidden="true">·</span>

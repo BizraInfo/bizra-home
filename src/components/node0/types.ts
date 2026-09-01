@@ -7,7 +7,16 @@
 export interface RuntimeInfo {
   name: string;
   port: number;
-  status: "LIVE" | "HALTED" | string;
+  bind_host: string;
+  /** CONTROL-PLANE-SEAL-1B truth projection: PUBLIC_REFERENCE | LOCAL_FOUNDER. */
+  mode?: string;
+  /** "LIVE" | "REFERENCE_ONLINE" | "HALTED" | "CONSTRUCTION" — reference mode never reports LIVE. */
+  status: "LIVE" | "REFERENCE_ONLINE" | "HALTED" | string;
+  /** True ONLY for LOCAL_FOUNDER after bind + successful commission. */
+  node0_active?: boolean;
+  actions_enabled?: boolean;
+  state_presentation?: string;
+  archive_snapshot_dir?: string | null;
   halted_reason: string | null;
   phase: string;
   sealed_at: string | null;
@@ -157,6 +166,14 @@ export interface TraceEntry {
   gate_reason: string;
   payload: string;
   sha256: string;
+  /** CONTROL-PLANE-SEAL-1B evidence v2 — present on new roots; absent (null) on the archived v1 traces. */
+  local_control_principal_id?: string | null;
+  producer_id?: string | null;
+  evidence_domain?: string | null;
+  artifact_hash?: string | null;
+  evidence_version?: number | null;
+  /** Descriptive-only, never authority. */
+  actor_id?: string | null;
 }
 
 export interface Traces {

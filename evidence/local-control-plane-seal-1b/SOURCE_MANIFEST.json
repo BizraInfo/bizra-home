@@ -1,0 +1,134 @@
+{
+  "schema": "BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B/SOURCE_MANIFEST/1",
+  "implementation_commit": "f241e1a1bfcd62c2241cd0e4edf590977962d69f",
+  "implementation_tree": "09de7240001a9b1a073de8445dfa478719023091",
+  "created_at": "2026-09-01T06:47:03.697345+00:00",
+  "note": "every path in this manifest exists in the committed tree at the implementation commit and on disk with these exact bytes \u2014 verifiable by scripts/verify-receipt-manifest.ts and git cat-file",
+  "changed_files_count": 31,
+  "changed_files_sha256": {
+    ".gitignore": {
+      "sha256": "a2f2c905a3ce917e4f2c1718d3043d1804a251024ec76ca68d6378b05b0d427e",
+      "bytes": 1003
+    },
+    "mini-services/bizra-runtime/scripts/kernel-probe.ts": {
+      "sha256": "ad02e17650ba2430c2eb1fcd3ae7eb158a05c20622cc0afccfb79be416ecf6a3",
+      "bytes": 8055
+    },
+    "mini-services/bizra-runtime/scripts/logical-backup.ts": {
+      "sha256": "760f3ec3db2ca6f2c977169aa852d60af8631cff1dc1c497110b2c6cd9e83063",
+      "bytes": 3298
+    },
+    "mini-services/bizra-runtime/scripts/nonce-race.ts": {
+      "sha256": "9f7a5e00ee6b8592a32b81ff10495661987e36a4751b1699514471e310486245",
+      "bytes": 5100
+    },
+    "mini-services/bizra-runtime/scripts/verify-receipt-manifest.ts": {
+      "sha256": "70c79730024dcc8e5aef2288d65d1bec02182189710d1022732ad5c271e2324c",
+      "bytes": 5735
+    },
+    "mini-services/bizra-runtime/src/envelope.ts": {
+      "sha256": "858db2399812e241c8b3a48d85faa8123cdb6e76caac96fa330a6ea48f7e0f4d",
+      "bytes": 9035
+    },
+    "mini-services/bizra-runtime/src/init-control-key.ts": {
+      "sha256": "8e5330750e6a861dddb63c75400dac467e0dab5fd7908f61be34ed522575c3dc",
+      "bytes": 4630
+    },
+    "mini-services/bizra-runtime/src/principal-registry.ts": {
+      "sha256": "59acb2c2c3cb4d33d59b1aa68bf00c60bc87f11de5ec8cf7ee32c0e663b634e1",
+      "bytes": 4675
+    },
+    "mini-services/bizra-runtime/src/sat.ts": {
+      "sha256": "677bec5d971093e72f2c4b73576cd90f597cfdc2e007124a7a099e560ef97da6",
+      "bytes": 11901
+    },
+    "mini-services/bizra-runtime/src/server.ts": {
+      "sha256": "39331357632b7f658dcdd6b88fee986afeb91b4054742dea98fd09b957c35f72",
+      "bytes": 21317
+    },
+    "mini-services/bizra-runtime/src/state.ts": {
+      "sha256": "5819c3aa62af6b971eeab8d763237cec582a8ad6cc37b933e09ed53e063d24af",
+      "bytes": 7193
+    },
+    "mini-services/bizra-runtime/src/store.ts": {
+      "sha256": "ccbd5833811d458a82a8e08bc979f80d82603647ea1321e20b815d98537d50c0",
+      "bytes": 8823
+    },
+    "mini-services/bizra-runtime/src/traces.ts": {
+      "sha256": "cf6a116c9bb057dade0322e68edf53a20c7446b5e20ede4520e00e00d6bcbfd8",
+      "bytes": 12363
+    },
+    "mini-services/bizra-runtime/test/boundary.test.ts": {
+      "sha256": "6cda27d5ed293cca91fdda581dd070a2c1a3acd65794f2fd127e221da13a2f74",
+      "bytes": 32104
+    },
+    "mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts": {
+      "sha256": "ac45e4797aea9cc265cc3823bcfd771f4a4d4fb76c319b10fc88472dd62c057c",
+      "bytes": 30835
+    },
+    "mini-services/bizra-runtime/tsconfig.json": {
+      "sha256": "a0f399a43ca6abd56f691d8c72b6c265bf01afce67a4ed3ba72e1e8fa065fb7b",
+      "bytes": 362
+    },
+    "src/app/page.tsx": {
+      "sha256": "3182b5504e86d31a08a1a82317625bae014c33cf6458df6ee710c8dba2de1c6f",
+      "bytes": 1932
+    },
+    "src/components/bizra/footer.tsx": {
+      "sha256": "adbef9668e70076c59f19ca89b85c1c0ef32f9fec8194eecd9064e9000505a4c",
+      "bytes": 1797
+    },
+    "src/components/bizra/hero.tsx": {
+      "sha256": "c0ca58102c781015b6542efa85fb9afa3fe4d26ab7be042aff805aa88ca57bad",
+      "bytes": 6462
+    },
+    "src/components/bizra/loop.tsx": {
+      "sha256": "fc5f221d1fa2ed4044bca1534065e1a9a267037f30ac5b568cf423ea1528971c",
+      "bytes": 7188
+    },
+    "src/components/bizra/nav.tsx": {
+      "sha256": "5c6fa51891ac38eb180d09477732a672f4c685eacb84ae48a336b332a594ca86",
+      "bytes": 5149
+    },
+    "src/components/bizra/origin.tsx": {
+      "sha256": "c1e405773d500dec445a09996fc268e39fc7e51540e524839556b78c7b6b8116",
+      "bytes": 4536
+    },
+    "src/components/bizra/proof.tsx": {
+      "sha256": "f78af24e296d2ca4c869e40b0dddf0756e4a83c45743958dd6c2de28e02292e5",
+      "bytes": 21372
+    },
+    "src/components/bizra/runtime-status.ts": {
+      "sha256": "a9f75e4cf7971e8d0a0e6cf3e7b5592a92c14c021cf9f96d848677f6d79fc528",
+      "bytes": 3331
+    },
+    "src/components/bizra/shared.tsx": {
+      "sha256": "a51eb9b49af98db427b15de643200b1a84a98566b1cd72b53a7788a82ab0d905",
+      "bytes": 3927
+    },
+    "src/components/bizra/vision.tsx": {
+      "sha256": "14df3022aeff10eac4fc59f61bd000548a5fae25a5d67564a7802ff54f70ea16",
+      "bytes": 24952
+    },
+    "src/components/node0/command-bar.tsx": {
+      "sha256": "7de210c0093d0d1d5d823772d60e254ddeef6879680b99d37117308ec295f0cc",
+      "bytes": 6363
+    },
+    "src/components/node0/hero.tsx": {
+      "sha256": "515e3d375b0908811724c130e96f121c3263b5e3cde0e23149597a107f551563",
+      "bytes": 8889
+    },
+    "src/components/node0/shoulder.tsx": {
+      "sha256": "207d5cd8a9078b4b781a286f8891a74b7b3b39f85b4f65a0b6cca8e7aa8f788e",
+      "bytes": 25393
+    },
+    "src/components/node0/types.ts": {
+      "sha256": "a9a45c32220a859c776ca08b1cf14d793397fc5f5a1e0269c93531ba07cad32a",
+      "bytes": 8292
+    },
+    "src/components/node0/vault.tsx": {
+      "sha256": "feea97f25647ce10d5fb6eb11f7f940aeee56441f89242f2633fa6ab2d9dd67a",
+      "bytes": 6190
+    }
+  }
+}

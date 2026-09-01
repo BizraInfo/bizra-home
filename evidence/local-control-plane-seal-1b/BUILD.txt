@@ -1,0 +1,5 @@
+BIZRA-HOME-LOCAL-CONTROL-PLANE-SEAL-1B · BUILD
+command: bun run build
+result: BUILD = NOT_RUN_PLATFORM_BLOCKED
+law: the hosting platform hard-forbids `bun run build` on this workspace (dev-server-only substrate); this is recorded honestly and is NEVER converted to PASS. Compensation: every touched route was compile-and-serve verified through the dev server (GET / 200) + full tsc --noEmit on service and app src/ + both test suites green from the committed tree.
+date: 2026-09-01T06:41:48Z

@@ -7,10 +7,15 @@
  */
 
 import { truncHash } from "./format";
+import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Footer({ state }: { state: Node0State | null }) {
   const rootHash = state?.constitution?.root_hash;
+  const reference = classifyRuntime(state?.runtime, state != null) === "REFERENCE";
+  const sourceNote = reference
+    ? "this page invents nothing — every number is measured from the sealed Node0 reference archive (read-only presentation)"
+    : "this page invents nothing — every number is read live from the Node0 runtime";
   return (
     <footer className="mt-auto w-full border-t border-white/5 bg-navy-900">
       <div className="mx-auto max-w-6xl px-6 pt-7 pb-8 sm:px-8">
@@ -23,8 +28,8 @@ export function Footer({ state }: { state: Node0State | null }) {
         </div>
         <p className="mt-5 text-center font-mono text-[0.56rem] leading-relaxed tracking-[0.12em] text-cream/20 uppercase sm:text-left">
           {rootHash
-            ? `Sealed constitution root ${truncHash(rootHash, 16)} · this page invents nothing — every number is read live from the Node0 runtime`
-            : "This page invents nothing — every number is read live from the Node0 runtime"}
+            ? `Hash-sealed constitution root ${truncHash(rootHash, 16)} · ${sourceNote}`
+            : sourceNote}
         </p>
       </div>
     </footer>

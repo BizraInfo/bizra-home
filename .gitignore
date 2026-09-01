@@ -55,5 +55,8 @@ server.log
 # boundary-1a: mission evidence + runtime boundary tests must be tracked (local-*/test patterns above were too broad)
 !evidence/local-sovereign-boundary-1a/
 !evidence/local-sovereign-boundary-1a/**
+# control-plane-1b: same law — mission evidence must be tracked
+!evidence/local-control-plane-seal-1b/
+!evidence/local-control-plane-seal-1b/**
 !mini-services/bizra-runtime/test/
 !mini-services/bizra-runtime/test/**
