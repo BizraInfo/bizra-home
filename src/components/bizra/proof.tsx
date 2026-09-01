@@ -285,7 +285,7 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
                   note="One trace was refused admission and recorded — not dropped. A system that never refuses is a system that cannot be trusted to accept."
                 >
                   <div className="flex flex-wrap items-baseline gap-x-5 gap-y-3 sm:gap-x-8">
-                    <Metric value={String(state.traces.stats.admitted)} unit="admitted" tone="verdant" className="text-5xl sm:text-6xl" />
+                    <Metric value={String(state.traces.stats.admissible)} unit="admitted" tone="verdant" className="text-5xl sm:text-6xl" />
                     <div className="flex flex-col gap-1">
                       <Metric value={String(state.traces.stats.inadmissible)} unit="refused" tone="ember" className="text-2xl" />
                       <span className="font-mono text-[0.6rem] tracking-[0.14em] text-cream/35 uppercase">
