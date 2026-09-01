@@ -1,0 +1,194 @@
+{
+  "schema": "bizra.boundary.receipt.v1",
+  "mission": "BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A",
+  "created_at": "2026-09-01T04:27:19.079Z",
+  "base_commit": "13e287e329f5e70950c859cefb3b93ada2c36e9e",
+  "base_tree": "44d4b1dfa0df26f32fc8baa13a639a604882ba02",
+  "implementation_commit": "4a72e29c50424cecb33cbac08b5a3ee581674464",
+  "implementation_tree": "95261941014831f3d213641ffa9572aa8fa7604d",
+  "pre_state_sha256": "45ca80d65545576513c749fd468b6536e841334aba4768cba744dfb1d3cebdf2",
+  "red_tests": {
+    "phase": "RED observed BEFORE implementation (tests written first)",
+    "summary": "0 pass / 19 fail — every failure named a real boundary defect",
+    "artifact": "evidence/local-sovereign-boundary-1a/RED_TESTS.json",
+    "raw_output": "evidence/local-sovereign-boundary-1a/red-run-output.txt",
+    "executed_in": "isolated copy /tmp/bizra-boundary-red (live archive never booted against pre-boundary source — it hardcodes the archive DB read-write at import; that constraint is itself evidence)"
+  },
+  "focused_tests": {
+    "result": "19 pass / 0 fail",
+    "command": "cd mini-services/bizra-runtime && bun test test/boundary.test.ts",
+    "covers": "R1 R2 R3 R4 R5 R6 R7 R8 R9 R10 R11 local-init source-scan"
+  },
+  "race_test": {
+    "result": "PASS — two concurrent same-nonce attempts: exactly one 200, one 403 replay, one ingestion (R6)"
+  },
+  "lint": {
+    "result": "PASS (bun run lint — zero output)"
+  },
+  "typecheck": {
+    "service": "PASS — bunx tsc --noEmit -p mini-services/bizra-runtime/tsconfig.json (zero errors, strict)",
+    "app": "PASS for all touched surfaces; pre-existing errors remain ONLY in untouched platform examples/ and skills/ (recorded, not ignored, out of scope)",
+    "fixed_by_this_gate": "TS2783 content-type double-spec on the outbox route (latent from the original code, surfaced by the typecheck gate and repaired)"
+  },
+  "build": {
+    "result": "NOT_RUN",
+    "reason": "the platform hard-forbids `bun run build` in this sandbox; compensated with: full dev-server compile + serve of every touched route (page 200, /api/node0/* 200 through :81), strict tsc, lint, and 19 executed boundary tests"
+  },
+  "browser_regression": {
+    "desktop": "DESIGN_PRESERVED — VLM full-page comparison vs pre-baseline screenshots (only animation-phase differences, excluded); DOM structure identical; git diff proves only transport files changed in app src",
+    "mobile": "PASS — 390x844: scrollWidth 390 == clientWidth 390, footer present, zero page errors",
+    "live_data": "hero NODE0 LIVE · 33 RECEIPTS VERIFIED · ROOT A2F1150268… served through the new fixed transport; evidence gate 58/59; receipt spine 33 cells",
+    "page_errors": 0
+  },
+  "recovered_state_pre_hashes": {
+    "bizra.db": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70",
+    "bizra.db-wal": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a",
+    "bizra.db-shm": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a"
+  },
+  "recovered_state_post_hashes": {
+    "bizra.db": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70",
+    "bizra.db-wal": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a",
+    "bizra.db-shm": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a"
+  },
+  "copy_restore_drill": {
+    "verdict": "RESTORE_VERIFIED — preserved copy opened in a temp root, chain walked 33/33 links, head a1c441c3…, broken_at null"
+  },
+  "transport": {
+    "runtime_bind": "127.0.0.1:7421 only (ss-verified; was *:7421 pre-boundary)",
+    "fixed_path": "browser -> :81 (Caddy) -> :3000 (Next /api/node0/*) -> 127.0.0.1:7421 — no caller input selects host/port",
+    "caller_port_param_refusals": "runtime 400 + app proxy 400 (verified through :81); legacy wildcard still live in the ROOT caddy process (cannot be reloaded by an unprivileged user — /app/Caddyfile, pid 2, no admin API) but it now dead-ends: the runtime refuses every request carrying the param, proven by direct probe"
+  },
+  "changed_files_sha256": {
+    "Caddyfile": {
+      "sha256": "53429109eab94bcfbcd4b673658d01ade86999ef6336a53c1f4354de575cae50",
+      "bytes": 806,
+      "note": "wildcard port proxy removed — fixed :3000 only"
+    },
+    ".gitignore": {
+      "sha256": "91b518db15a2ce82d09625bbc45a0372a85162d2e5ceb05fc8d97e1e1ab40a41",
+      "bytes": 857,
+      "note": "evidence + runtime test negations"
+    },
+    "src/app/api/node0/[...path]/route.ts": {
+      "sha256": "d7b19d0dc2d2ab5cdf6353d7d5629a13044a3e935ee35f25b927fda60bf18013",
+      "bytes": 2677,
+      "note": "NEW fixed same-origin proxy -> 127.0.0.1:7421"
+    },
+    "src/components/node0/api.ts": {
+      "sha256": "c1e47e4c16fb16385b8654c8b2acb259456b9c4622a9765062ef014a2b054ec9",
+      "bytes": 3559,
+      "note": "browser transport -> /api/node0/*"
+    },
+    "src/components/node0/use-node0-state.ts": {
+      "sha256": "65c27c8c60f5096627e0f4de261ba3984e2f1cb809d3d5840c67aeda54fc3d84",
+      "bytes": 2274,
+      "note": "comment: fixed transport"
+    },
+    "mini-services/bizra-runtime/index.ts": {
+      "sha256": "995d2e340a48efb9200c068cdd5d276eb5d63306b128e8b6137f7a1d46363d8c",
+      "bytes": 1033,
+      "note": "thin bootstrap (mode resolved before store)"
+    },
+    "mini-services/bizra-runtime/src/mode.ts": {
+      "sha256": "4479b3fe477cfd2e05d3aef301aa28f1ea6dfe232398e117010cedab1435ab2f",
+      "bytes": 3557,
+      "note": "NEW mode resolution + R1 loopback policy"
+    },
+    "mini-services/bizra-runtime/src/server.ts": {
+      "sha256": "1f13a94bcc32ae572f0acf4363266a3510b21be3fc83823eaa82c8ef521d102a",
+      "bytes": 17247,
+      "note": "NEW HTTP surface behind all gates"
+    },
+    "mini-services/bizra-runtime/src/envelope.ts": {
+      "sha256": "04bd0b486e574e2768c95c441ee04e57b3e68c14604136878d3d763e8a3a5f23",
+      "bytes": 5469,
+      "note": "NEW local action envelope v1 + nonce claim"
+    },
+    "mini-services/bizra-runtime/src/local-init.ts": {
+      "sha256": "1a6729a51ff884df87fb2b45dd5779117079fe031f6d6c61cb6fb12cc83a2aa9",
+      "bytes": 2257,
+      "note": "NEW dedicated local key command"
+    },
+    "mini-services/bizra-runtime/src/store.ts": {
+      "sha256": "b5be6698d9227b1b7d43b994c50bc368ccf915a591b816408af846e556252da3",
+      "bytes": 7786,
+      "note": "portable state root + public snapshot + local DDL"
+    },
+    "mini-services/bizra-runtime/src/traces.ts": {
+      "sha256": "d3186acfc2250decde4a8438844a78270f422021edcfe52f93fab19c060ca20b",
+      "bytes": 5595,
+      "note": "server-derived provenance + actor principal"
+    },
+    "mini-services/bizra-runtime/src/sat.ts": {
+      "sha256": "30ae49b965e8307400caf27bd04c29767cc787b2c6d967e4964be91fcca37ba8",
+      "bytes": 9108,
+      "note": "corroboration counts principals"
+    },
+    "mini-services/bizra-runtime/src/auto.ts": {
+      "sha256": "c278490e3cb59d1e37845a413fb22684bd06e6f6f1cec10dc36c0ec9d4fcac27",
+      "bytes": 21855,
+      "note": "kernel revert: authority before mutation"
+    },
+    "mini-services/bizra-runtime/src/fate.ts": {
+      "sha256": "97b6e745c40fe995fec90ab59b54504b43b611b6ed740896d16625b1928350ea",
+      "bytes": 4085,
+      "note": "randomBytes lease ids"
+    },
+    "mini-services/bizra-runtime/src/mission.ts": {
+      "sha256": "2bba7a2b16daf73bb354450bbc89d5a77d17112e4e2a7c58f6a41829d9bb9fd7",
+      "bytes": 14829,
+      "note": "randomBytes attempt ids"
+    },
+    "mini-services/bizra-runtime/src/state.ts": {
+      "sha256": "a60d63725b7f07980868e14fb6085f35c21ba7386d958bc091c9f3d9dbedfcaa",
+      "bytes": 6355,
+      "note": "mode/bind_host/state_presentation honest fields"
+    },
+    "mini-services/bizra-runtime/types/bun-shim.d.ts": {
+      "sha256": "fd21ef0069ac88f8cd6c44f6231143313503b34fed4e710319b215705e4e0f39",
+      "bytes": 1651,
+      "note": "NEW zero-dep ambient Bun types for tsc"
+    },
+    "mini-services/bizra-runtime/tsconfig.json": {
+      "sha256": "2fa63758a5a38d1eacb3cd1a257158922a4e81130adabbace472c9a2eaddf1ee",
+      "bytes": 343,
+      "note": "NEW service typecheck config"
+    },
+    "mini-services/bizra-runtime/test/boundary.test.ts": {
+      "sha256": "f77013bd85b05b7cfa6aa6e25f139f8b682029694a0c92a99fbcca478cd68ebf",
+      "bytes": 27135,
+      "note": "NEW 19 red-first boundary tests"
+    }
+  },
+  "what_this_proves": [
+    "PUBLIC_ZAI_RUNTIME = REFERENCE_READ_ONLY — the public deployment presents the sealed 33-receipt archive and refuses every consequential action, fail-closed",
+    "an untrusted browser can no longer reach any authoritative mutation path: no caller-selected port, no wildcard CORS, no unauthenticated POST, no trace-label forgery, no string-counted corroboration, no one-call cycle application, no pre-authority revert, no liveness claim before bind",
+    "LOCAL_FOUNDER mode exists fail-closed: explicit external state root + explicit loopback bind + HMAC action envelopes with atomic nonces; the local key never leaves a 0600 file outside the repo",
+    "the recovered 33-receipt state is preserved byte-for-byte through all of it (pre == post hashes), and the preserved copy is a tested backup (restore drill)"
+  ],
+  "what_this_does_not_prove": [
+    "LOCAL_MODEL_CONNECTED — false; no local model provider exists yet (NEXT: LOCAL-MODEL-PROVIDER-1A)",
+    "PAT_7_ACTIVE / SAT_5_ACTIVE_N1 — false; manifests and local exercise are later slices",
+    "NODE0_CLOSED, PRODUCTION_QUALIFIED, REMOTE_WRITE_SAFE (unknown), NODE1_CONNECTED, FEDERATION — false/unknown as before",
+    "the two-phase proposal/commit consent contract for cycle/revert is named and deferred to Gate B; the kernel order is repaired but the human-consent ceremony does not exist yet"
+  ],
+  "truth_labels": {
+    "PUBLIC_ZAI_RUNTIME": "REFERENCE_READ_ONLY",
+    "LOCAL_CONTROL_PLANE": "IMPLEMENTED_AND_TESTED",
+    "LOCAL_ACTION_ADMISSION": "FAIL_CLOSED",
+    "TRACE_PROVENANCE_FORGERY_PATH": "CLOSED_STATIC_AND_TESTED",
+    "LOCAL_RUNTIME_LIVENESS_ORDERING": "VERIFIED_BY_TEST",
+    "LOCAL_MODEL_CONNECTED": false,
+    "PAT_7_ACTIVE": false,
+    "SAT_5_ACTIVE_N1": false,
+    "ESTATE_DISCOVERED": false,
+    "ESTATE_GRAPH_BUILT": false,
+    "NODE0_FOUNDER_MODE_ACTIVE": false,
+    "NODE0_CLOSED": false,
+    "PRODUCTION_QUALIFIED": false,
+    "REMOTE_WRITE_SAFE": "unknown",
+    "NODE1_CONNECTED": false,
+    "FEDERATION": false
+  },
+  "authority_delta": 0
+}
