@@ -1,0 +1,35 @@
+{
+  "schema": "bizra.boundary.red_tests.v1",
+  "mission": "BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A",
+  "recorded_at": "2026-09-01T09:5x:00+04:00",
+  "phase": "RED (tests written BEFORE implementation; observed failing)",
+  "execution_context": {
+    "where": "isolated copy at /tmp/bizra-boundary-red (cp -r of mini-services/bizra-runtime incl. state + node_modules)",
+    "why_not_the_live_tree": "pre-boundary store.ts hardcodes the recovered archive DB read-write at import (no state-root seam) — booting or importing it in-place would mutate the preserved 33-receipt state. This constraint is itself boundary evidence.",
+    "command": "cd /tmp/bizra-boundary-red && bun test test/boundary.test.ts",
+    "raw_output": "red-run-output.txt",
+    "summary": "0 pass · 19 fail · 18 expect() calls"
+  },
+  "tests": [
+    { "id": "R1-a", "test": "LOCAL mode with 0.0.0.0 must refuse to run", "observed": "process did not exit (null after 9s) — pre-boundary code has no bind-host policy and binds all interfaces (*:7421)", "verdict": "RED" },
+    { "id": "R1-b", "test": "LOCAL mode with ABSENT host must refuse", "observed": "process did not exit — no explicit loopback policy exists", "verdict": "RED" },
+    { "id": "R1-c", "test": "PUBLIC mode reports mode + explicit loopback bind", "observed": "health response has no mode/bind_host fields (undefined)", "verdict": "RED" },
+    { "id": "R2", "test": "runtime refuses requests carrying XTransformPort", "observed": "GET /api/state?XTransformPort=7421 returned 200 (served normally)", "verdict": "RED" },
+    { "id": "R3-a", "test": "no access-control-allow-origin emitted", "observed": "access-control-allow-origin: * present on /api/health (index.ts jsonHeaders)", "verdict": "RED" },
+    { "id": "R3-b", "test": "foreign Origin refused before body processing", "observed": "POST /api/trace with Origin: https://evil.example returned 200 and ingested the trace", "verdict": "RED" },
+    { "id": "R4-a", "test": "PUBLIC POST /api/trace fails closed, zero state change", "observed": "returned 200, trace ingested, state mutated", "verdict": "RED" },
+    { "id": "R4-b", "test": "PUBLIC POST /api/mission fails closed (no model call spent)", "observed": "static: route unauthenticated (no envelope gate); executing it would spend a live model call — forbidden this slice", "verdict": "RED (source inspection)" },
+    { "id": "R5-a", "test": "envelope module bizra.node0.local_action_envelope.v1", "observed": "Cannot find module '../src/envelope'", "verdict": "RED (capability absent)" },
+    { "id": "R5-b", "test": "route refuses missing/invalid/replayed envelopes", "observed": "static: no envelope gate exists on POST /api/trace", "verdict": "RED (source inspection)" },
+    { "id": "R6", "test": "nonce atomicity: two concurrent same-nonce attempts yield one winner", "observed": "static: no nonce store exists (no replay/concurrency control)", "verdict": "RED (source inspection)" },
+    { "id": "R7", "test": "trace provenance derived by server, principal = actor", "observed": "static: index.ts reads body.source as the authority label", "verdict": "RED (source inspection)" },
+    { "id": "R8-a", "test": "one actor under two labels is one corroborating principal", "observed": "corroboration clause PASSED (expected FAIL) — sat.ts counts DISTINCT source strings; traces table has no actor/principal column", "verdict": "RED (executed)" },
+    { "id": "R8-b/R10-kernel", "test": "kernel revert without authority mutates NOTHING", "observed": "revertTransition returned ok:true (expected refusal) — mutation succeeded with no authority object; auto.ts calls setContractValue before any FATE admission", "verdict": "RED (executed)" },
+    { "id": "R9", "test": "/api/cycle cannot apply a transition", "observed": "static: unauthenticated one-call path applies transitions (runCycle -> setContractValue); executing would spend a model call — forbidden this slice", "verdict": "RED (source inspection)" },
+    { "id": "R10-http", "test": "HTTP revert disabled this slice", "observed": "static: /api/transition/:id/revert unauthenticated and mutating", "verdict": "RED (source inspection)" },
+    { "id": "R11", "test": "bind failure persists no BOOT/LIVE receipt; refusal is NAMED", "observed": "EADDRINUSE crash with no named refusal — and commission() had already run before Bun.serve (receipt persisted pre-bind in pre-boundary order)", "verdict": "RED (executed)" },
+    { "id": "LOCAL-INIT", "test": "local-init generates 0600 key outside repo, prints only key_id", "observed": "exit 1 — src/local-init.ts does not exist", "verdict": "RED (capability absent)" },
+    { "id": "SOURCE-SCAN", "test": "no XTransformPort / CORS wildcard / Math.random in authority paths", "observed": "Math.random found in src/mission.ts:71 (attempt ids) and src/fate.ts:46 (lease ids) — authority-token generation; (app-side XTransformPort use recorded separately: src/components/node0/use-node0-state.ts fetches /api/state?XTransformPort=7421)", "verdict": "RED (executed scan)" }
+  ],
+  "note": "The first RED is the prize: 19 named failures, zero silent passes. Repair ONLY what they name."
+}
