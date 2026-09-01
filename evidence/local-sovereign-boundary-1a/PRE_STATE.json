@@ -1,0 +1,185 @@
+{
+  "schema": "bizra.boundary.pre_state.v1",
+  "mission": "BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A",
+  "created_at": "2026-09-01T04:05:40.451Z",
+  "workspace": {
+    "current_commit": "13e287e329f5e70950c859cefb3b93ada2c36e9e",
+    "current_tree": "44d4b1dfa0df26f32fc8baa13a639a604882ba02",
+    "archive_reference_commit": "13e287e329f5e70950c859cefb3b93ada2c36e9e",
+    "archive_reference_tree": "44d4b1dfa0df26f32fc8baa13a639a604882ba02",
+    "head_matches_archive": true,
+    "git_status_untracked": [
+      "upload/BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A.md",
+      "upload/BIZRA-ZAI-EVIDENCE-AUDIT-2026-09-01.json",
+      "upload/Pasted Content_1788234923239.txt"
+    ],
+    "git_status_note": "untracked canon files only; no tracked-file modifications at baseline"
+  },
+  "protected_files_sha256": {
+    "Caddyfile": {
+      "sha256": "89b7a9c04929989fb5014e1b5032ecd58df9491a3e3d09d69d62d740f29b0a7b",
+      "bytes": 493
+    },
+    "next.config.ts": {
+      "sha256": "6b87a766fe1b6f3abd82cc8305e13f993bfcd619acd2e9f041c5ebef3ce2cc53",
+      "bytes": 233
+    },
+    "package.json": {
+      "sha256": "798ea853f51d5c529049240faced96193086a87b3cf2f73753125fcfca7c5ba3",
+      "bytes": 3213
+    },
+    "mini-services/bizra-runtime/index.ts": {
+      "sha256": "486de5b7a3985b43e2122ceff099c4712a4d2797f045217a85e529c58595a22c",
+      "bytes": 9728
+    }
+  },
+  "runtime_sources_sha256": {
+    "src/auto.ts": "793f3e926d45f22531cdf4136edbf28606e5aff804960e99933b91b1c3f4ff32",
+    "src/chain.ts": "768ca12536db4b0aa8f4556a589fba660f12a38e6457bade33d9c94a1c62de98",
+    "src/constitution.ts": "dc96088bf67eda6ded9a9997d27832f470a38cf100985848366b34c87b302c5c",
+    "src/contracts.ts": "081934c1f2c50a1ea82182128b4bcf749ba0af09fa15c728d6c7a4c960da4da7",
+    "src/dema.ts": "4292e04d9bf5aa1b02e5cf28b04c978bfd83c3958d9a657f5626e4c73e49d340",
+    "src/executor.ts": "c337db05943a77a6a2aafa16e44535df156e9ff3c5311bc8c4ac13f55ed44c73",
+    "src/fate.ts": "a5f7aa6dbb300944be9894f2e8f49d91178ad8eb00e25dcee7be1099e66a52a4",
+    "src/hash.ts": "7c0f7b19886d95ad2ad0434214f6854da63ed48f77a68df211d7fb9b45e15480",
+    "src/mission.ts": "9e9f3afcdb1cabdec42437f41b66ebec035187243abc4b4a76260b524e110888",
+    "src/pat.ts": "ef83b3c30580e866aa4e74c115ce7e32676b8067b645932265a120891b5670ba",
+    "src/sat.ts": "7ebdc5f3cce2d0fbcab72d11b213d34e78a8ab1156d14d1a510f7ce6ce607eeb",
+    "src/shoulder.ts": "c15c2fde9bb2ced549c0ed1546524a5186d775705030f29e7b32fa37634c2f67",
+    "src/state.ts": "b90f396650623d3def15ca8b891ac8663563186893a512351b8133bd86130df4",
+    "src/store.ts": "2941faec1c5d60bb64ec6835537d2b4ea541829b092df0a0db3c6fd6aa4dab02",
+    "src/traces.ts": "bbc2ed66db7af966b1fbe424702d334cdb7b4d39011a19ea534b5736a4b09550"
+  },
+  "recovered_state": {
+    "bizra.db": {
+      "sha256": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70",
+      "bytes": 4096
+    },
+    "bizra.db-wal": {
+      "sha256": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a",
+      "bytes": 2154792
+    },
+    "bizra.db-shm": {
+      "sha256": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a",
+      "bytes": 32768
+    },
+    "chain_length": 33,
+    "chain_head": "a1c441c3a5421805aff2028d4d624b5aafcde3955835aae54db925d477040875",
+    "chain_read_from": "COPY only (evidence/local-sovereign-boundary-1a/archive-preserved/)",
+    "preservation_note": "DB+WAL+SHM preserved together before any tool opened them; runtime stopped cleanly; port 7421 verified clear"
+  },
+  "baseline_screenshots": [
+    "pre-desktop-hero.png",
+    "pre-desktop-full.png",
+    "pre-mobile-hero.png"
+  ],
+  "design_tokens": {
+    "source": "src/app/globals.css @theme",
+    "tokens": [
+      "gold ramp 100-900",
+      "navy 800/900",
+      "cream",
+      "verdant",
+      "ember",
+      "solar",
+      "font-serif/sans/arabic/mono"
+    ],
+    "components_inventory": {
+      "bizra": [
+        "nav",
+        "hero",
+        "origin",
+        "fracture",
+        "loop",
+        "proof",
+        "law",
+        "ihsan",
+        "forest",
+        "invitation",
+        "footer",
+        "seed-mark",
+        "shared",
+        "format"
+      ],
+      "node0": [
+        "use-node0-state",
+        "types",
+        "api"
+      ]
+    },
+    "design_frozen": true
+  },
+  "exposed_runtime_routes_at_baseline": [
+    {
+      "route": "GET /api/health",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/state",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/shoulder",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/dema",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/verify",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/contracts",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/mission",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "GET /api/outbox/:name",
+      "auth": "none",
+      "mutates": false
+    },
+    {
+      "route": "POST /api/mission",
+      "auth": "NONE — unauthenticated consequential",
+      "mutates": true
+    },
+    {
+      "route": "POST /api/cycle",
+      "auth": "NONE — unauthenticated consequential",
+      "mutates": true
+    },
+    {
+      "route": "POST /api/trace",
+      "auth": "NONE — unauthenticated consequential",
+      "mutates": true
+    },
+    {
+      "route": "POST /api/transition/:id/revert",
+      "auth": "NONE — unauthenticated consequential",
+      "mutates": true
+    }
+  ],
+  "cors_at_baseline": "access-control-allow-origin: * on every response (index.ts jsonHeaders) — WILDCARD CONFIRMED",
+  "proxy_at_baseline": "Caddyfile: query XTransformPort=* → reverse_proxy localhost:{query} — CALLER-SELECTED PORT CONFIRMED; runtime binds *:7421 (no host) — ALL-INTERFACE BIND CONFIRMED",
+  "runtime_bind_at_baseline": "Bun.serve({port:7421}) — hostname absent → binds all interfaces (ss showed *:7421)",
+  "liveness_order_at_baseline": "commission() runs at module import BEFORE Bun.serve — NODE0_BOOT receipt + Dema relay + trace persisted BEFORE listener bind (R11 defect CONFIRMED by source order)",
+  "revert_order_at_baseline": "revertTransition: setContractValue BEFORE issueLease (auto.ts) — mutation before authority (R10 defect CONFIRMED by source order)",
+  "corroboration_at_baseline": "sat.ts corroboration counts DISTINCT source strings; traces table has no actor/principal column (R7/R8 defect CONFIRMED)",
+  "current_truth_labels": {
+    "public_page": "all numbers live-measured from runtime /api/state (33 receipts, 58/59 traces, FATE 10/10, shoulder #23, root a2f11502…)",
+    "labels_in_use": "MEASURED / VERIFIED / UNKNOWN — none pending",
+    "known_open_items": "CONDUCTOR-WELD-0A worklog-vs-spec discrepancy; 5 gates awaiting GO phrases"
+  }
+}
