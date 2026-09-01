@@ -173,6 +173,21 @@ if (RESOLVED.mode === "LOCAL_FOUNDER") {
       authority_delta INTEGER NOT NULL DEFAULT 0,
       detail TEXT
     );
+    -- MODEL-TIMING-OBSERVABILITY-1A: atomic budget reservation (PK = mission_id, exactly one dispatch per mission)
+    CREATE TABLE IF NOT EXISTS model_budget (
+      mission_id TEXT PRIMARY KEY,
+      reserved_at TEXT NOT NULL
+    );
+    -- MODEL-TIMING-OBSERVABILITY-1A: lifecycle timing — hashes and event names only, never prompt/response content
+    CREATE TABLE IF NOT EXISTS model_timing_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TEXT NOT NULL,
+      mission_id TEXT NOT NULL,
+      event TEXT NOT NULL,
+      at_ms INTEGER NOT NULL,
+      since_request_ms INTEGER NOT NULL,
+      detail TEXT
+    );
   `);
   // migration for pre-boundary/pre-1B local roots (LOCAL roots only; the public archive is never altered)
   try {

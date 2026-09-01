@@ -51,6 +51,7 @@ import {
   MODEL_AUTHORITY_LABEL,
   MAX_MODEL_CALLS_PER_MISSION,
 } from "./model-provider";
+import { getTiming } from "./model-timing";
 import { classifyEndpoint, saveModelConfigAtomic, newModelConfig, MODEL_CONFIG_SCHEMA, PROVIDER_ID_LOCAL_OLLAMA } from "./model-config";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
@@ -404,6 +405,14 @@ export function start() {
             call_budget: { max_model_calls_per_mission: MAX_MODEL_CALLS_PER_MISSION },
             recent_calls: modelCallLog(6),
           });
+        }
+
+        // ---- Observability — timing log (read-only, LOCAL_FOUNDER only, privacy-safe)
+        if (path === "/api/model/timings" && req.method === "GET") {
+          if (RUNTIME_MODE !== "LOCAL_FOUNDER") return publicReadOnlyRefusal("GET /api/model/timings");
+          const missionId = url.searchParams.get("mission_id") ?? "MUMU-DAILY-STATE-RELIEF-0A";
+          const events = getTiming(missionId);
+          return json({ ok: true, mission_id: missionId, events, count: events.length, authority: MODEL_AUTHORITY_LABEL, law: "timing log stores event names and hashes only — never prompt/response content" });
         }
 
         // ---- Consequential actions below: HALTED refuses all -------------------

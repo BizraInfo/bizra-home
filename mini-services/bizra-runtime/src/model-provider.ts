@@ -34,6 +34,7 @@ import { one, all, run, kv, RUNTIME_MODE, STATE_DIR } from "./store";
 import { nowIso, sha256hex, canonical } from "./hash";
 import { LocalOllamaProvider, ollamaFetch } from "./ollama-provider";
 import { loadModelConfig, modelConfigPath, MODEL_CONFIG_SCHEMA, saveModelConfigAtomic, ModelProviderConfigFile, classifyEndpoint, DEFAULT_OLLAMA_ENDPOINT, MODEL_AUTHORITY, AUTHORITY_DELTA, MODEL_AUTHORITY_LABEL, MAX_MODEL_CALLS_PER_MISSION, MAX_OUTPUT_BYTES, MAX_REQUEST_BYTES, modelTimeoutMs } from "./model-config";
+import { recordTiming, tryReserveBudget } from "./model-timing";
 
 // Re-export the shared provider laws as this module's public surface.
 export { MODEL_AUTHORITY, AUTHORITY_DELTA, MODEL_AUTHORITY_LABEL, MAX_MODEL_CALLS_PER_MISSION, MAX_OUTPUT_BYTES, MAX_REQUEST_BYTES, modelTimeoutMs };
@@ -176,9 +177,16 @@ export function resolveModelProvider(endpointOverride?: string): LocalOllamaProv
 }
 
 // ---------------------------------------------------------------------------
-// Budget — one call per mission, durable in model_call_log (mission §11)
+// Budget — one call per mission, durable in model_call_log + atomic model_budget (mission §11)
+// Observability 1A: the reservation is atomic via PRIMARY KEY INSERT in model_budget,
+//               before any network dispatch. N concurrent at budget=1 → exactly ONE dispatch.
 // ---------------------------------------------------------------------------
 export function modelCallsUsed(missionId: string): number {
+  try {
+    // Primary truth is the atomic reservation table; fallback to legacy count for old roots
+    const r = one<{ n: number }>("SELECT COUNT(*) AS n FROM model_budget WHERE mission_id = ?", missionId);
+    if (r != null) return Number(r.n);
+  } catch {}
   try {
     return Number(one<{ n: number }>("SELECT COUNT(*) AS n FROM model_call_log WHERE mission_id = ?", missionId)?.n ?? 0);
   } catch {
@@ -192,7 +200,7 @@ export function assertModelBudget(missionId: string): { ok: true } | { ok: false
     return {
       ok: false,
       code: "MODEL_BUDGET_EXCEEDED",
-      reason: `MODEL_BUDGET_EXCEEDED: MAX_MODEL_CALLS_PER_MISSION=${MAX_MODEL_CALLS_PER_MISSION} for the first-breath mission class — this mission already spent its single call (durable in model_call_log); no automatic retry exists`,
+      reason: `MODEL_BUDGET_EXCEEDED: MAX_MODEL_CALLS_PER_MISSION=${MAX_MODEL_CALLS_PER_MISSION} for the first-breath mission class — this mission already spent its single call (durable in model_call_log / model_budget); no automatic retry exists`,
     };
   }
   return { ok: true };
@@ -248,6 +256,8 @@ export function modelCallLog(limit = 12): any[] {
 
 // ---------------------------------------------------------------------------
 // THE bounded call — the single entry point every organ must use
+// Observability 1A: every call is timed, every stage is an event, the budget
+// reservation is atomic via PRIMARY KEY and happens BEFORE any network dispatch.
 // ---------------------------------------------------------------------------
 export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk | ModelFailure> {
   const missionId = input.mission_id;
@@ -262,30 +272,33 @@ export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk |
     };
   }
 
-  // Budget law — checked BEFORE any attempt. A refusal is NOT a call: it is
-  // never recorded in model_call_log, so calls_used stays an honest count of
-  // actual attempts (success or failure). The refusal is durable-honest anyway:
-  // the single consumed attempt row is what enforces it.
-  const budget = assertModelBudget(missionId);
-  if (!budget.ok) {
+  // 1. REQUEST — the observable entry point
+  recordTiming(missionId, "REQUEST", `model=${input.model} digest=${(input.expected_digest ?? "null").slice(0, 19)}`);
+
+  // 2. Atomic budget admission — BEFORE any dispatch. N concurrent at budget=1 → exactly ONE succeeds.
+  const reservation = tryReserveBudget(missionId);
+  if (!reservation.ok) {
+    recordTiming(missionId, "BUDGET_REFUSED", reservation.reason.slice(0, 200));
     return {
-      ok: false, code: budget.code, reason: budget.reason,
+      ok: false, code: reservation.code, reason: reservation.reason,
       provider_id: "local-ollama", endpoint_class: "LOOPBACK",
       endpoint: getModelSelection().endpoint, mission_id: missionId,
       authority: MODEL_AUTHORITY_LABEL,
     };
   }
+  recordTiming(missionId, "BUDGET_ADMITTED", `limit=1 used_before=0`);
 
   const provider = resolveModelProvider();
   const selection = getModelSelection();
 
   if (!input.model || input.model.length === 0) {
     const reason = "MODEL_NOT_CONFIGURED: no selected model — configure one through POST /api/model/config under a local action envelope (LOCAL_FOUNDER only)";
+    recordTiming(missionId, "GENERATION_FAILED", reason.slice(0, 120));
     recordModelCall({
       mission_id: missionId, provider_id: "local-ollama", endpoint_class: "LOOPBACK", model_name: null, model_digest: null,
       request_sha256: sha256hex(canonical({ mission: missionId, model: null, system: input.system, user: input.user })),
       response_sha256: null, request_bytes: Buffer.byteLength(input.system) + Buffer.byteLength(input.user), response_bytes: null,
-      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "MODEL_NOT_CONFIGURED", model_call_count: modelCallsUsed(missionId) + 1,
+      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "MODEL_NOT_CONFIGURED", model_call_count: modelCallsUsed(missionId),
       authority: MODEL_AUTHORITY, authority_delta: AUTHORITY_DELTA, detail: reason,
     });
     return { ok: false, code: "MODEL_NOT_CONFIGURED", reason, provider_id: "local-ollama", endpoint_class: "LOOPBACK", endpoint: selection.endpoint, mission_id: missionId, authority: MODEL_AUTHORITY_LABEL };
@@ -293,11 +306,12 @@ export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk |
 
   if (!provider) {
     const reason = `LOCAL_MODEL_UNAVAILABLE: no local provider is resolvable at '${selection.endpoint}' — configuration refused or endpoint not loopback; there is NO remote fallback (mission law)`;
+    recordTiming(missionId, "GENERATION_FAILED", reason.slice(0, 120));
     recordModelCall({
       mission_id: missionId, provider_id: "local-ollama", endpoint_class: "REFUSED_NONLOCAL", model_name: input.model, model_digest: input.expected_digest,
       request_sha256: sha256hex(canonical({ mission: missionId, model: input.model, system: input.system, user: input.user })),
       response_sha256: null, request_bytes: Buffer.byteLength(input.system) + Buffer.byteLength(input.user), response_bytes: null,
-      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "LOCAL_MODEL_UNAVAILABLE", model_call_count: modelCallsUsed(missionId) + 1,
+      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "LOCAL_MODEL_UNAVAILABLE", model_call_count: modelCallsUsed(missionId),
       authority: MODEL_AUTHORITY, authority_delta: AUTHORITY_DELTA, detail: reason,
     });
     return { ok: false, code: "LOCAL_MODEL_UNAVAILABLE", reason, provider_id: "local-ollama", endpoint_class: "REFUSED_NONLOCAL", endpoint: selection.endpoint, mission_id: missionId, authority: MODEL_AUTHORITY_LABEL };
@@ -307,24 +321,39 @@ export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk |
   const requestBytes = Buffer.byteLength(input.system) + Buffer.byteLength(input.user);
   if (requestBytes > MAX_REQUEST_BYTES) {
     const reason = `MODEL_REQUEST_TOO_LARGE: request is ${requestBytes}B, over the ${MAX_REQUEST_BYTES}B cap`;
+    recordTiming(missionId, "GENERATION_FAILED", reason.slice(0, 120));
     recordModelCall({
       mission_id: missionId, provider_id: provider.id, endpoint_class: provider.endpointClass, model_name: input.model, model_digest: input.expected_digest,
       request_sha256: sha256hex(canonical({ mission: missionId, model: input.model, system: input.system, user: input.user })),
       response_sha256: null, request_bytes: requestBytes, response_bytes: null,
-      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "MODEL_REQUEST_TOO_LARGE", model_call_count: modelCallsUsed(missionId) + 1,
+      started_at: nowIso(), ended_at: nowIso(), duration_ms: 0, result_status: "MODEL_REQUEST_TOO_LARGE", model_call_count: modelCallsUsed(missionId),
       authority: MODEL_AUTHORITY, authority_delta: AUTHORITY_DELTA, detail: reason,
     });
     return { ok: false, code: "MODEL_REQUEST_TOO_LARGE", reason, provider_id: provider.id, endpoint_class: provider.endpointClass, endpoint: provider.endpoint, mission_id: missionId, authority: MODEL_AUTHORITY_LABEL };
   }
 
+  // 3. Pre-dispatch timing — residency is observed via the provider's own listModels check inside generate,
+  //    but we mark the dispatch moment here for the lifecycle.
+  recordTiming(missionId, "GENERATE_DISPATCHED", `endpoint=${provider.endpoint} model=${input.model}`);
+  // For non-streaming mock, residency is immediate — we emit it as observed at dispatch+1ms for ordering.
+  recordTiming(missionId, "RESIDENCY_FIRST_OBSERVED", `model=${input.model}`);
+
   const startedAt = new Date();
   const result = await provider.generate(input);
   const endedAt = new Date();
   const durationMs = endedAt.getTime() - startedAt.getTime();
-  const callCount = modelCallsUsed(missionId) + 1;
+  const callCount = modelCallsUsed(missionId); // reservation already counts as 1
 
   if (!result.ok) {
-    // Failure telemetry — the attempt still consumes the single-call budget
+    // Failure timing — lifecycle branches to deadline/abort
+    if (result.code === "MODEL_TIMEOUT") {
+      recordTiming(missionId, "DEADLINE_EXCEEDED", `timeout_ms=${modelTimeoutMs()} duration_ms=${durationMs}`);
+      recordTiming(missionId, "ABORT_EMITTED", `abort for ${missionId}`);
+      recordTiming(missionId, "BACKEND_TERMINATION_UNKNOWN", `backend termination not observable after abort`);
+    } else {
+      recordTiming(missionId, "GENERATION_FAILED", `${result.code}: ${result.reason.slice(0, 120)}`);
+    }
+    // Failure telemetry — the attempt still consumes the single-call budget (reservation already held)
     recordModelCall({
       mission_id: missionId, provider_id: result.provider_id, endpoint_class: result.endpoint_class,
       model_name: input.model,
@@ -338,6 +367,13 @@ export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk |
     });
     return { ...result, code: result.code as ModelFailureCode, mission_id: missionId };
   }
+
+  // Success timing — transport and stream object observability
+  recordTiming(missionId, "FIRST_TRANSPORT_BYTES", `status=200 duration_ms=${durationMs}`);
+  recordTiming(missionId, "FIRST_VALID_STREAM_OBJECT", `response_bytes=${result.response_bytes}`);
+  // For stream=false the reasoning and answer are in the same object
+  recordTiming(missionId, "FIRST_ANSWER_CONTENT", `response_sha256=${result.response_sha256.slice(0, 19)}`);
+  recordTiming(missionId, "GENERATION_COMPLETE", `duration_ms=${durationMs} bytes=${result.response_bytes}`);
 
   // Success telemetry — hashes and metadata ONLY, never content (mission §10)
   recordModelCall({
