@@ -16,6 +16,7 @@ import { Origin } from "@/components/bizra/origin";
 import { Fracture } from "@/components/bizra/fracture";
 import { Loop } from "@/components/bizra/loop";
 import { Proof } from "@/components/bizra/proof";
+import { Vision } from "@/components/bizra/vision";
 import { Law } from "@/components/bizra/law";
 import { Ihsan } from "@/components/bizra/ihsan";
 import { Forest } from "@/components/bizra/forest";
@@ -40,6 +41,7 @@ export default function Home() {
           <Fracture />
           <Loop state={data} />
           <Proof state={data} error={error} />
+          <Vision state={data} />
           <Law />
           <Ihsan />
           <Forest />

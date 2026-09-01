@@ -1,0 +1,865 @@
+     1→**1 Sep 2026 · 7:40 AM · Dubai**
+     2→
+     3→# 1. Executive signal
+     4→
+     5→The recovered **BIZRA Home** workspace is far more than a visual prototype. Direct inspection of the exported source, Git history and archived SQLite state found:
+     6→
+     7→```text
+     8→workspace UUID       406a049a-f31f-4562-aae7-a74a198ebdbd
+     9→archive SHA-256      2287832c0a9bf5ae21eed87a3f8ed50bd049124692633a3df17c8f6f2ffcf31d
+    10→Git commit           13e287e329f5e70950c859cefb3b93ada2c36e9e
+    11→Git tree             44d4b1dfa0df26f32fc8baa13a639a604882ba02
+    12→
+    13→receipt records      33
+    14→verified links       33 / 33
+    15→chain head           a1c441c3a5421805aff2028d4d624b5aafcde3955835aae54db925d477040875
+    16→
+    17→founder mission      MUMU-DAILY-STATE-RELIEF-0A
+    18→effect writes        1
+    19→mission receipt      1348f5f7c0459a7d8b3777edc72c9f14b9b251390482f9a1db32227e2b5cf157
+    20→effect SHA-256       a2147d0b6ded9bea033d5f1d580af52fc3361df5d8a27a2924f6761a52146e02
+    21→```
+    22→
+    23→The archived outbox file independently hashes to the same value carried as both the effect hash and observer hash. Ten FATE-style leases are persisted as consumed; seven contract transitions are recorded, including two reversions. This is credible evidence of a **measured archived reference prototype**, not merely a rendered mockup.
+    24→
+    25→However, the same source contains a complete authority-risk path:
+    26→
+    27→```text
+    28→untrusted browser
+    29→    ↓
+    30→caller-selected local proxy port
+    31→    ↓
+    32→wildcard CORS
+    33→    ↓
+    34→unauthenticated consequential POST routes
+    35→    ↓
+    36→caller-selected internal-looking trace labels
+    37→    ↓
+    38→SAT counts source strings as independent corroboration
+    39→    ↓
+    40→/api/cycle can issue a lease and mutate a contract
+    41→```
+    42→
+    43→There is also a revert path that mutates the contract **before** FATE admission, and the runtime can persist a `LIVE` state before its listener has successfully bound.
+    44→
+    45→Therefore, installing this workspace unchanged on Mumu’s laptop would increase capability and data reach **before establishing sovereign control**.
+    46→
+    47→The exact next move is **not yet** Ollama, Qwen/Gemma, filesystem crawling, the Estate Graph, mobile pairing, PAT-7 expansion or federation.
+    48→
+    49→The one correct spearpoint is:
+    50→
+    51→```text
+    52→BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A
+    53→```
+    54→
+    55→Its purpose is to close the browser-to-authoritative-mutation edge while preserving the extraordinary BIZRA Home design.
+    56→
+    57→```text
+    58→ZAI_BIZRA_HOME_DESIGN          = CANON_CANDIDATE
+    59→ZAI_RUNTIME_ARCHIVE            = MEASURED_REFERENCE_PROTOTYPE
+    60→ZAI_FIRST_FOUNDER_MISSION      = MEASURED_ARCHIVED
+    61→ZAI_RECEIPT_CHAIN              = 33 / 33 HASH-LINKS VERIFIED
+    62→
+    63→SAFE_LOCAL_INSTALLATION        = FALSE
+    64→LOCAL_CONTROL_PLANE            = NOT_YET_HARDENED
+    65→LOCAL_MODEL_CONNECTED          = FALSE
+    66→NODE0_FOUNDER_MODE_ACTIVE      = FALSE
+    67→NODE0_CLOSED                   = FALSE
+    68→```
+    69→
+    70→The full paste-ready Z.ai mission is here:
+    71→
+    72→**[BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A — peak Z.ai agent instruction](sandbox:/mnt/data/BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A.md)**
+    73→
+    74→```text
+    75→Instruction SHA-256
+    76→a81a7be1de6c43a79f30a1b359b9488f066101e24a1441621ac3c409962d12c2
+    77→```
+    78→
+    79→---
+    80→
+    81→# 2. Evidence boundary
+    82→
+    83→## Sources actually inspected
+    84→
+    85→### Z.ai materials
+    86→
+    87→1. The full Z.ai conversation clipping associated with workspace UUID `406a049a-f31f-4562-aae7-a74a198ebdbd`. Its metadata binds it to the recovered Z.ai conversation and records the clipping date as 1 September 2026. 
+    88→2. The three exported source workspaces:
+    89→
+    90→   * `406a049a…` — BIZRA Home/runtime.
+    91→   * `7d6f8fc4…` — APEX architecture board.
+    92→   * `fef66cde…` — Proofworld UX.
+    93→3. Embedded Git repositories, commits, trees and worktree status.
+    94→4. The BIZRA Home source, including:
+    95→
+    96→   * Next.js frontend;
+    97→   * Caddy proxy;
+    98→   * Bun runtime;
+    99→   * PAT, SAT, FATE, executor, observer, chain and autopoietic-cycle code;
+   100→   * SQLite database, WAL and SHM;
+   101→   * root PDF copies;
+   102→   * worklogs.
+   103→5. A copy of the archived SQLite state, queried without changing the preserved extraction.
+   104→6. All 33 receipt links independently recomputed.
+   105→7. The persisted founder mission, effect artifact and effect/observer hashes.
+   106→
+   107→The Z.ai narrative itself claims a commissioned prototype, one founder-relief mission, exactly-once replay and an autopoietic transition sequence.  The source and database substantiate a meaningful portion of those claims, though not all of their strongest wording.
+   108→
+   109→### Current host evidence
+   110→
+   111→The uploaded host observation measured all five required deployment facets—listeners, mounts, state roots, process authority and root files. 
+   112→
+   113→It records:
+   114→
+   115→```text
+   116→listeners        46
+   117→mounts           142
+   118→state roots      3
+   119→visible PIDs     618
+   120→root files       3
+   121→observer isolated false
+   122→```
+   123→
+   124→The three root PDFs hash-match their expected identities, are mode `0444`, are not writable and are not under sync mounts. The final v0.2 observation remains:
+   125→
+   126→```text
+   127→remote_write_verdict = INCOMPLETE
+   128→reason = reachability_without_write_correlation:non_loopback_listener
+   129→observation_hash =
+   130→sha256:7f62f1b8383783112ae39caad3d7cad52b7d0d089efb14328cedb3d59ffc2529
+   131→```
+   132→
+   133→The current kernel intentionally distinguishes reachability from write authority.  An `INCOMPLETE` artifact contributes no closure evidence, so `remote_write` remains `UNKNOWN`. 
+   134→
+   135→### Current GitHub state
+   136→
+   137→Canonical `BizraInfo/Dema/main` is:
+   138→
+   139→```text
+   140→commit  5c46280eb16ca4466b6b469365857819d3352cb6
+   141→tree    bcb8896877b4b49d2c814b8ae468046720bc71a9
+   142→signed  false
+   143→branch protection  disabled
+   144→```
+   145→
+   146→
+   147→
+   148→That exact head has a failed `check` run and failed gitleaks run. 
+   149→
+   150→The producer/bridge chain remains open:
+   151→
+   152→* `BizraInfo/bizra-data-lake#114` — open draft, unmerged, head `f3c7b21875ec5941459db6e0de66e1515a722b1e`. 
+   153→* `BizraInfo/bizra-data-lake#115` — open draft, stacked on #114, head `5f529b518e4377f6cddc35834e8116002b365531`. 
+   154→* `BizraInfo/Dema#452` — open, unmerged, non-mergeable, head `774029f8656fbdedfc01f784f29240b263d17558`.
+   155→
+   156→### Google Drive
+   157→
+   158→I inspected the connected historical **BIZRA Genesis System Audit**. It independently diagnosed a “Harness Paralysis” state and identified a conductor weld as the missing operational connection between otherwise mature organs. It is a useful historical source, not present-state authority. The Drive document exists as a 29 August 2026 artifact. 
+   159→
+   160→## Unavailable or not re-executed
+   161→
+   162→I did not have:
+   163→
+   164→* mutation access to your currently open Z.ai workspace;
+   165→* a current shell on your laptop;
+   166→* a fresh execution of the exported BIZRA Home source;
+   167→* the current live Z.ai deployment bytes;
+   168→* a current model inventory proving the exact Gemma or Qwen artifact identity;
+   169→* mobile-device filesystem or companion access;
+   170→* sovereign signer/private-key access;
+   171→* authority to alter host listeners, firewall, services or root-file permissions;
+   172→* authority to merge GitHub PRs.
+   173→
+   174→My web backend could not render the live Space-Z site and returned a cache miss. That does **not** establish that the site is offline; the source export and your browser observation remain separate evidence. 
+   175→
+   176→## Epistemic separation
+   177→
+   178→| Claim                                                                  | Class                                   |
+   179→| ---------------------------------------------------------------------- | --------------------------------------- |
+   180→| Workspace archive hashes, commits and trees                            | verified fact                           |
+   181→| Archived SQLite has 33 receipts                                        | verified fact                           |
+   182→| All 33 receipt links recompute                                         | verified fact                           |
+   183→| Founder mission effect file matches carried effect and observer hashes | measured archived observation           |
+   184→| The Z.ai prototype used a real model through its SDK                   | source-inspected fact                   |
+   185→| That model was local/offline                                           | false                                   |
+   186→| Root bytes are hash-sealed                                             | verified source/runtime fact            |
+   187→| Root files were physically immutable in the archive                    | false; owner-writable                   |
+   188→| Receipt chain is tamper-evident                                        | verified within the archived algorithm  |
+   189→| Receipts are sovereignly signed/non-repudiable                         | false                                   |
+   190→| Arbitrary crash-window recovery preserves all eight hashes             | not proven                              |
+   191→| The BIZRA Home UX should become the human-facing shell                 | high-confidence architectural inference |
+   192→| The Z.ai runtime should replace canonical Rust Node0 wholesale         | rejected hypothesis                     |
+   193→| Canonical Node0 is closed                                              | false                                   |
+   194→| `remote_write` is safe                                                 | unknown                                 |
+   195→| Local Ollama/Qwen integration will work without adaptation             | unknown                                 |
+   196→| Mobile belongs to Mumu’s Node0 estate rather than becoming Node1       | source-bound topology law               |
+   197→
+   198→---
+   199→
+   200→# 3. Current system map
+   201→
+   202→## A. Recovered Z.ai BIZRA Home
+   203→
+   204→```text
+   205→BIZRA HOME UI
+   206→    │
+   207→    │ src/components/node0/api.ts
+   208→    │ appends XTransformPort=7421
+   209→    ▼
+   210→CADDY PROXY
+   211→    │
+   212→    │ target selected from caller query
+   213→    ▼
+   214→BUN NODE0 RUNTIME
+   215→    │
+   216→    ├── GET state / verify / Dema / contracts / outbox
+   217→    │
+   218→    ├── POST mission
+   219→    │
+   220→    ├── POST trace
+   221→    │
+   222→    ├── POST cycle
+   223→    │
+   224→    └── POST transition revert
+   225→             │
+   226→             ▼
+   227→          PAT
+   228→    z-ai-web-dev-sdk
+   229→             │
+   230→             ▼
+   231→          SAT
+   232→ deterministic checks
+   233→ weak provenance/corroboration identity
+   234→             │
+   235→             ▼
+   236→          FATE
+   237→ SQLite-backed leases
+   238→ non-atomic issue/consume surfaces
+   239→             │
+   240→             ▼
+   241→         EXECUTOR
+   242→ bounded Markdown outbox
+   243→             │
+   244→             ▼
+   245→         OBSERVER
+   246→ reread + SHA-256
+   247→             │
+   248→             ▼
+   249→        RECEIPT CHAIN
+   250→ SHA-256-linked SQLite records
+   251→             │
+   252→             ▼
+   253→      BIZRA HOME STATUS
+   254→```
+   255→
+   256→## B. Canonical BIZRA/Dema path
+   257→
+   258→```text
+   259→MUMU
+   260→  │
+   261→  ▼
+   262→DEMA
+   263→face / cockpit / consent / bridge
+   264→  │
+   265→  ▼
+   266→GOVERNED RUST NODE0 RUNTIME
+   267→  │
+   268→  ├── local PAT
+   269→  ├── deterministic SAT
+   270→  ├── FATE
+   271→  ├── bounded effect
+   272→  ├── independent observation
+   273→  └── durable receipt / recovery
+   274→
+   275→Formal closure dependencies:
+   276→  remote_write       UNKNOWN
+   277→  PR #114            OPEN_DRAFT
+   278→  PR #115            OPEN_DRAFT
+   279→  Dema #452          OPEN_UNMERGED
+   280→  Dema exact-head CI RED
+   281→```
+   282→
+   283→## C. Correct convergence target
+   284→
+   285→```text
+   286→BIZRA HOME DESIGN
+   287→        │ preserve
+   288→        ▼
+   289→SECURE LOCAL CONTROL PLANE
+   290→        │ build first
+   291→        ▼
+   292→LOCAL MODEL PROVIDER
+   293→        │
+   294→        ▼
+   295→CANONICAL GOVERNED RUNTIME ADAPTER
+   296→        │
+   297→        ▼
+   298→DEMA / PAT / SAT / FATE
+   299→        │
+   300→        ▼
+   301→APPROVAL-GATED ESTATE DISCOVERY
+   302→        │
+   303→        ▼
+   304→LOCAL INDEX + ESTATE GRAPH
+   305→        │
+   306→        ▼
+   307→MUMU FOUNDER-RELIEF MISSION
+   308→```
+   309→
+   310→The UI must be a **read-only truth projection**, not another authority owner.
+   311→
+   312→---
+   313→
+   314→# 4. Multi-lens findings
+   315→
+   316→| Lens                         | Status                                    | Evidence-bound finding                                                                                     | Impact                | Next verification                                         |
+   317→| ---------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------- | --------------------------------------------------------- |
+   318→| Architecture/modularity      | Strong design, partial runtime separation | PAT/SAT/FATE/executor/observer are distinct modules, but HTTP routes collapse admission and authority      | Critical              | introduce explicit control plane                          |
+   319→| Security/threat model        | **Blocking**                              | caller-selectable proxy, wildcard CORS, unauthenticated mutating routes, forgeable source labels           | Critical              | red-first boundary tests                                  |
+   320→| Performance                  | Unqualified locally                       | archived prototype works at small scale; `/api/state` repeatedly verifies/hashes broad state               | Medium                | benchmark after secure local boot                         |
+   321→| Reliability/recovery         | Partial                                   | sealed replay works; several crash windows are not transactionally complete                                | High                  | kill-point matrix under clean temp state                  |
+   322→| Scalability                  | Direction only                            | Estate Graph/mobile/federation are not active                                                              | Medium later          | do not start before local N=1                             |
+   323→| Error handling               | Mixed                                     | many fail-closed paths exist, but `LIVE` can be recorded before bind and revert mutates before authority   | Critical              | reorder state transitions                                 |
+   324→| Observability                | Strong UX, weak authority provenance      | interface exposes chain/state well; source labels are not authenticated identity                           | High                  | principal-bound evidence envelope                         |
+   325→| Dependency/supply chain      | Risk                                      | direct Z.ai SDK dependency; tracked `.env`; runtime DB lives inside source tree; build ignores type errors | High                  | portable state root and local provider later              |
+   326→| Documentation/dev experience | Strong but drift-prone                    | excellent worklogs and UI explanations; “CLOSED/LIVE” sometimes exceeds canonical scope                    | Medium                | generated scope labels                                    |
+   327→| Data governance/privacy      | Not ready for estate scan                 | broad disk/mobile scan would expand access before approval manifests exist                                 | Critical              | discover → display → consent → index                      |
+   328→| Agentic safety               | Good doctrine, incomplete enforcement     | proposer/verifier split exists; externally submitted evidence can counterfeit source diversity             | Critical              | actor-bound provenance                                    |
+   329→| Capability/consent           | **Blocking**                              | cycle and revert do not require exact human action envelope                                                | Critical              | atomic nonce-bound envelope                               |
+   330→| Receipt integrity            | Partial                                   | 33-link hash chain verifies; no Ed25519 signer or external anchor                                          | High for assurance    | label tamper-evident only                                 |
+   331→| Proof-of-Impact              | Correctly inactive                        | no valid path from archived prototype to token minting                                                     | Positive boundary     | retain zero-mint posture                                  |
+   332→| Implementation readiness     | Prototype level                           | export is valuable but unsafe as local appliance                                                           | Critical              | complete boundary slice                                   |
+   333→| Human burden removed         | Promising, not current                    | founder-relief artifact exists in archive; no installed autonomous daily node exists                       | Highest mission value | secure control plane → local provider → real Mumu mission |
+   334→
+   335→---
+   336→
+   337→# 5. SAPE findings
+   338→
+   339→## S — Structure
+   340→
+   341→The critical structural defect is a violation of BIZRA’s intended ownership chain:
+   342→
+   343→```text
+   344→browser request
+   345→    → runtime mutation
+   346→```
+   347→
+   348→without a distinct, authenticated and replay-safe authority object.
+   349→
+   350→The desired structure is:
+   351→
+   352→```text
+   353→intent
+   354→  ↓
+   355→proposal
+   356→  ↓
+   357→independent verification
+   358→  ↓
+   359→human-bound action envelope
+   360→  ↓
+   361→FATE lease
+   362→  ↓
+   363→effect
+   364→  ↓
+   365→independent observation
+   366→  ↓
+   367→receipt
+   368→```
+   369→
+   370→The archived prototype contains nearly every organ, but its external admission seam allows the presentation layer to reach too far into the authority plane.
+   371→
+   372→## A — Abstraction
+   373→
+   374→The following reusable laws survive the audit:
+   375→
+   376→```text
+   377→PROPOSER ≠ VERIFIER
+   378→VERIFIER ≠ AUTHORIZER
+   379→AUTHORIZER ≠ EXECUTOR
+   380→EXECUTOR ≠ OBSERVER
+   381→```
+   382→
+   383→```text
+   384→SAME MACHINE ≠ SAME AUTHORITY
+   385→```
+   386→
+   387→```text
+   388→SOURCE STRING ≠ PROVENANCE
+   389→```
+   390→
+   391→```text
+   392→HASH CHAIN ≠ SIGNATURE
+   393→SIGNATURE ≠ TRUTH
+   394→```
+   395→
+   396→```text
+   397→LISTENER REACHABILITY ≠ WRITE AUTHORITY
+   398→```
+   399→
+   400→```text
+   401→LIVE may be emitted only after the listener is bound.
+   402→```
+   403→
+   404→```text
+   405→No authority object → no mutation.
+   406→```
+   407→
+   408→```text
+   409→No complete evidence → no promotion.
+   410→```
+   411→
+   412→## P — Proof
+   413→
+   414→### Formal rail
+   415→
+   416→The source expresses good invariants but does not formally prove the whole browser-to-effect path.
+   417→
+   418→### Cryptographic rail
+   419→
+   420→The archived chain is internally tamper-evident under its SHA-256 linking algorithm. It is not sovereignly signed or externally anchored.
+   421→
+   422→### Empirical rail
+   423→
+   424→The archive contains a measured one-write mission and matching readback. The current live workspace was not re-executed in this audit.
+   425→
+   426→### Economic rail
+   427→
+   428→No useful impact or token reward can be inferred merely from a mission receipt. PoI remains inactive.
+   429→
+   430→## E — Emergence
+   431→
+   432→The greatest second-order risk is not model hallucination. It is **capability amplification through productization**.
+   433→
+   434→Adding a powerful local model, full-disk discovery, mobile pairing and a rich estate graph to the current authority path would multiply the blast radius of the existing seam.
+   435→
+   436→The greatest leverage is the inverse:
+   437→
+   438→> close the authority seam once, then every later capability inherits a safer substrate.
+   439→
+   440→---
+   441→
+   442→# 6. Hidden-state hypotheses
+   443→
+   444→These remain hypotheses unless directly proven.
+   445→
+   446→### H1 — Product shell ahead of sovereign substrate
+   447→
+   448→The Home experience is unusually mature, while local authority admission remains prototype-grade.
+   449→
+   450→**Confidence: very high.**
+   451→
+   452→### H2 — BIZRA now has two valuable but unconverged lineages
+   453→
+   454→```text
+   455→Z.ai lineage
+   456→  exceptional product semantics and UX
+   457→
+   458→Rust/Dema lineage
+   459→  stronger governed execution and proof discipline
+   460→```
+   461→
+   462→Neither should overwrite the other. They should be joined through a narrow adapter.
+   463→
+   464→**Confidence: high.**
+   465→
+   466→### H3 — Model capability is no longer the dominant blocker
+   467→
+   468→Gemma/Qwen quality may improve usefulness, but adding either cannot solve consent, provenance, nonce atomicity or crash ordering.
+   469→
+   470→**Confidence: very high.**
+   471→
+   472→### H4 — The first sustainable product milestone is one secure local founder mission
+   473→
+   474→Not twelve model processes, not a full hypergraph, not mobile and not federation.
+   475→
+   476→**Confidence: high.**
+   477→
+   478→### H5 — The Estate Graph should begin as approved metadata, not comprehensive ingestion
+   479→
+   480→The spider view can initially show devices, models, repositories, roots, missions and receipts without ingesting every private byte.
+   481→
+   482→**Confidence: high.**
+   483→
+   484→---
+   485→
+   486→# 7. SNR-ranked golden gems
+   487→
+   488→| Rank | Signal                                                     | Why it dominates                                                        |
+   489→| ---: | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+   490→|    1 | **Close the browser → mutation authority edge**            | highest risk reduction; enables every later feature safely              |
+   491→|    2 | **Preserve BIZRA Home design as a protected asset**        | immediately removes future redesign burden and retains product identity |
+   492→|    3 | **Reuse the founder-relief mission semantics**             | converts architecture into real value for Mumu                          |
+   493→|    4 | **Bind corroboration to principals, not source strings**   | prevents synthetic “independence” and evidence laundering               |
+   494→|    5 | **Bind `LIVE` to actual listener success**                 | prevents state/UI from outrunning runtime reality                       |
+   495→|    6 | **Make recovery complete before the effect**               | supports true exactly-once behavior across arbitrary failure points     |
+   496→|    7 | **Separate public reference mode from local founder mode** | preserves the public site without exposing control authority            |
+   497→|    8 | **Treat laptop and mobile as one Node0 estate**            | avoids manufactured quorum and preserves sovereign topology             |
+   498→|    9 | **Add local models only behind a provider boundary**       | allows Gemma/Qwen evolution without rebuilding Dema                     |
+   499→|   10 | **Index by approval and provenance**                       | makes the knowledge system useful without becoming a privacy hazard     |
+   500→
+   501→The suppressed low-SNR branches are:
+   502→
+   503→```text
+   504→full hypergraph infrastructure
+   505→all-disk ingestion
+   506→native mobile app now
+   507→seven separate PAT model servers
+   508→five separate SAT model servers
+   509→Node1 onboarding
+   510→federation
+   511→PoI/token economics
+   512→TEE deployment
+   513→broad architecture rewrite
+   514→```
+   515→
+   516→None is the next causal blocker.
+   517→
+   518→---
+   519→
+   520→# 8. DEMA-FDE failure classification
+   521→
+   522→## INWARD
+   523→
+   524→Repairable inside the Z.ai source workspace:
+   525→
+   526→* arbitrary `XTransformPort` proxy;
+   527→* wildcard CORS;
+   528→* absent local action envelope;
+   529→* non-atomic nonce/lease operations;
+   530→* caller-selected trace source;
+   531→* string-counted corroboration;
+   532→* direct cycle application;
+   533→* revert-before-FATE ordering;
+   534→* `LIVE` before successful bind;
+   535→* repo-local mutable runtime state;
+   536→* absolute archived paths;
+   537→* missing tests;
+   538→* ignored TypeScript build errors;
+   539→* recovery gaps across effect/receipt crash windows;
+   540→* over-strong status labels.
+   541→
+   542→## OUTWARD
+   543→
+   544→Requires another environment or explicit authority:
+   545→
+   546→* installing the exported package on Mumu’s laptop;
+   547→* discovering the exact installed local model artifacts;
+   548→* measuring actual Gemma/Qwen latency and VRAM;
+   549→* pairing a real mobile device;
+   550→* changing host services/firewall/listeners;
+   551→* sovereign signer ceremony;
+   552→* production principal activation;
+   553→* GitHub PR approvals/merges;
+   554→* `remote_write` listener→principal→state correlation;
+   555→* onboarding Node1.
+   556→
+   557→## MIXED
+   558→
+   559→### Local model integration
+   560→
+   561→Provider abstraction is inward. Real local endpoint execution is outward to the laptop.
+   562→
+   563→### Estate discovery
+   564→
+   565→Scanner implementation is inward. Reading Mumu’s actual private roots requires explicit local approval.
+   566→
+   567→### Dema/Rust convergence
+   568→
+   569→Adapter code is inward. Selecting and commissioning the authoritative runtime lineage requires exact host evidence and a clean integration surface.
+   570→
+   571→---
+   572→
+   573→# 9. Minimum provable spearpoint
+   574→
+   575→## `BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A`
+   576→
+   577→### Exact objective
+   578→
+   579→Transform the current BIZRA Home source from:
+   580→
+   581→```text
+   582→beautiful measured prototype
+   583→+
+   584→unsafe external mutation admission
+   585→```
+   586→
+   587→into:
+   588→
+   589→```text
+   590→public reference mode = read-only
+   591→
+   592→local founder mode =
+   593→loopback-only
+   594→fixed transport
+   595→authenticated action envelope
+   596→atomic nonce
+   597→principal-bound evidence
+   598→authority-before-mutation
+   599→truthful liveness ordering
+   600→```
+   601→
+   602→### Why this is the best leverage-to-effort slice
+   603→
+   604→It:
+   605→
+   606→* addresses a verified blocker;
+   607→* changes no root documents;
+   608→* requires no runtime model call;
+   609→* introduces no broad data access;
+   610→* preserves the existing design;
+   611→* is independently testable;
+   612→* reduces the risk of every later feature;
+   613→* creates a stable base for Ollama/Qwen;
+   614→* can produce a precise receipt;
+   615→* remains reversible through a feature branch/checkpoint.
+   616→
+   617→### Deferred candidates
+   618→
+   619→**Local Ollama provider** is deferred because stronger cognition should not be placed behind an unsafe control path.
+   620→
+   621→**Estate scanning/indexing** is deferred because it would expose private data to an admission layer not yet sovereign.
+   622→
+   623→**PAT-7/SAT-5 activation** is deferred because role multiplication does not repair authority.
+   624→
+   625→**Mobile companion** is deferred because it adds a second device and pairing surface.
+   626→
+   627→**Federation/Node1** is deferred because Node0 is not yet an installable, secure daily product.
+   628→
+   629→---
+   630→
+   631→# 10. Implementation or exact blocker
+   632→
+   633→No source mutation was performed by me.
+   634→
+   635→I do not have write access to your currently open Z.ai workspace, and I did not start its runtime, invoke a model or modify its archived state.
+   636→
+   637→I instead produced the exact bounded implementation mission for the agent that already has that access.
+   638→
+   639→### Execute this now
+   640→
+   641→**[Open/download the complete Z.ai instruction](sandbox:/mnt/data/BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A.md)**
+   642→
+   643→The instruction requires the agent to:
+   644→
+   645→1. bind the current live workspace commit/tree;
+   646→2. preserve the visual design and archived 33-receipt state;
+   647→3. establish red-first tests;
+   648→4. remove arbitrary proxy routing and wildcard CORS;
+   649→5. separate `PUBLIC_REFERENCE` and `LOCAL_FOUNDER`;
+   650→6. add a local HMAC action envelope;
+   651→7. consume nonces atomically;
+   652→8. derive trace provenance server-side;
+   653→9. count authenticated principals for corroboration;
+   654→10. disable cycle/revert application in this slice;
+   655→11. repair authority-before-mutation and bind-before-LIVE ordering;
+   656→12. run focused, race, typecheck, build and browser regressions;
+   657→13. produce a hash-bound receipt;
+   658→14. stop without beginning the local-model phase.
+   659→
+   660→The next mission after—and only after—this passes is:
+   661→
+   662→```text
+   663→LOCAL-MODEL-PROVIDER-1A
+   664→```
+   665→
+   666→---
+   667→
+   668→# 11. Tests and acceptance results
+   669→
+   670→## Tests performed during this audit
+   671→
+   672→```text
+   673→archive Git identities                     VERIFIED
+   674→fresh extracted worktrees                  CLEAN
+   675→archived SQLite tables                     INSPECTED
+   676→receipt links independently recomputed     33 / 33 PASS
+   677→founder effect file hash                    MATCH
+   678→receipt effect hash                         MATCH
+   679→receipt observer hash                       MATCH
+   680→root PDF archive hashes                     MATCH
+   681→current Z.ai source tests                   NONE FOUND
+   682→live workspace runtime tests                NOT RUN
+   683→```
+   684→
+   685→## Current external qualification
+   686→
+   687→Canonical Dema exact head remains red:
+   688→
+   689→```text
+   690→Dema main    5c46280eb16ca4466b6b469365857819d3352cb6
+   691→check        FAIL
+   692→gitleaks     FAIL
+   693→NODE0        OPEN
+   694→```
+   695→
+   696→ 
+   697→
+   698→Current host closure remains:
+   699→
+   700→```text
+   701→remote_write     UNKNOWN / MEASURED_INCOMPLETE
+   702→closure ledger   9 SAT / 0 VIOL / 1 UNKNOWN
+   703→NODE0            OPEN
+   704→```
+   705→
+   706→The Z.ai instruction defines twelve mandatory red-first controls covering loopback binding, proxy confinement, CORS, read-only default, action-envelope validation, nonce races, provenance forgery, corroboration, cycle application, revert ordering, listener-bound liveness and visual-design regression.
+   707→
+   708→No successful result may be claimed merely because a command ran.
+   709→
+   710→---
+   711→
+   712→# 12. Open proof gaps
+   713→
+   714→```text
+   715→1. Z.ai live workspace current HEAD/tree
+   716→   UNKNOWN until the open agent binds them.
+   717→
+   718→2. Local sovereign control boundary
+   719→   NOT IMPLEMENTED.
+   720→
+   721→3. Public/reference versus local/founder mode
+   722→   NOT IMPLEMENTED.
+   723→
+   724→4. Local model provider
+   725→   NOT IMPLEMENTED.
+   726→
+   727→5. Gemma/Qwen exact artifact identity
+   728→   NOT INSPECTED.
+   729→
+   730→6. PAT-7 role manifests
+   731→   NOT ACTIVE in a local installed node.
+   732→
+   733→7. SAT-5 N=1 authority domain
+   734→   NOT ACTIVE in a local installed node.
+   735→
+   736→8. Mumu laptop estate discovery
+   737→   NOT EXECUTED.
+   738→
+   739→9. Local index and Estate Graph
+   740→   ABSENT.
+   741→
+   742→10. Mobile companion
+   743→    ABSENT.
+   744→
+   745→11. Arbitrary crash-window exactly-once recovery
+   746→    NOT PROVEN by the Z.ai prototype.
+   747→
+   748→12. Sovereign signatures/non-repudiation
+   749→    ABSENT in the Z.ai chain.
+   750→
+   751→13. Archived root physical immutability
+   752→    FALSE despite hash sealing.
+   753→
+   754→14. Current Dema exact-head qualification
+   755→    RED.
+   756→
+   757→15. bizra-data-lake #114
+   758→    OPEN_DRAFT.
+   759→
+   760→16. bizra-data-lake #115
+   761→    OPEN_DRAFT.
+   762→
+   763→17. Dema #452
+   764→    OPEN_UNMERGED.
+   765→
+   766→18. remote_write
+   767→    UNKNOWN pending causal correlation.
+   768→
+   769→19. Founder Mode daily usefulness
+   770→    NOT YET MEASURED on Mumu's actual machine.
+   771→
+   772→20. Canonical Node0 closure
+   773→    FALSE.
+   774→```
+   775→
+   776→## Convergence levels
+   777→
+   778→| Capability                        |                                                  Level |
+   779→| --------------------------------- | -----------------------------------------------------: |
+   780→| BIZRA Home visual/product concept | **3 — tested and observed in archive/browser history** |
+   781→| Archived receipt chain            |                       **3 — independently recomputed** |
+   782→| Archived founder effect           |                     **3 — artifact and receipt agree** |
+   783→| Sovereign action admission        |                                **1 — documented need** |
+   784→| Safe local installer              |                                                **0–1** |
+   785→| Local model provider              |                                                  **0** |
+   786→| Local PAT/SAT/FATE daily node     |                                                **0–1** |
+   787→| Estate Graph                      |                                                  **0** |
+   788→| Mobile estate companion           |                                                  **0** |
+   789→| Node1/federation                  |                                                  **0** |
+   790→| Canonical Node0 closure           |                               **OPEN / not converged** |
+   791→
+   792→---
+   793→
+   794→# 13. Receipt
+   795→
+   796→A machine-readable audit receipt has been created:
+   797→
+   798→**[BIZRA Z.ai evidence audit receipt](sandbox:/mnt/data/BIZRA-ZAI-EVIDENCE-AUDIT-2026-09-01.json)**
+   799→
+   800→```text
+   801→audit id
+   802→BIZRA-ZAI-EVIDENCE-AUDIT-2026-09-01-A
+   803→
+   804→receipt SHA-256
+   805→6ff426680e08cb43caa11ecb07cdf7aa1d81f46d345221c04242ada81dcb6e59
+   806→
+   807→selected spearpoint
+   808→BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A
+   809→
+   810→instruction SHA-256
+   811→a81a7be1de6c43a79f30a1b359b9488f066101e24a1441621ac3c409962d12c2
+   812→
+   813→runtime started        false
+   814→model invoked          false
+   815→source mutated         false
+   816→root files mutated     false
+   817→host changed           false
+   818→authority_delta        0
+   819→```
+   820→
+   821→# Final verdict
+   822→
+   823→The Z.ai workspace gives BIZRA something extremely valuable:
+   824→
+   825→```text
+   826→the human experience
+   827→the founder-relief mission
+   828→the visible proof language
+   829→the living-loop product semantics
+   830→```
+   831→
+   832→The canonical Rust/Dema lineage gives BIZRA something else:
+   833→
+   834→```text
+   835→stronger execution ownership
+   836→better closure discipline
+   837→host-bound evidence
+   838→recovery machinery
+   839→no-false-GREEN proof semantics
+   840→```
+   841→
+   842→The winning path is not to choose one and discard the other.
+   843→
+   844→It is:
+   845→
+   846→```text
+   847→PRESERVE THE HOME
+   848→        ↓
+   849→CLOSE ITS AUTHORITY BOUNDARY
+   850→        ↓
+   851→CONNECT A LOCAL MODEL
+   852→        ↓
+   853→CONNECT THE GOVERNED RUNTIME
+   854→        ↓
+   855→DISCOVER APPROVED NODE0 ESTATE
+   856→        ↓
+   857→RUN ONE REAL MUMU-RELIEF MISSION
+   858→        ↓
+   859→RECOVER WITHOUT DUPLICATION
+   860→        ↓
+   861→MEASURE TIME RETURNED
+   862→```
+   863→
+   864→**Next step:** paste the linked `BIZRA-HOME-LOCAL-SOVEREIGN-BOUNDARY-1A` instruction into the open Z.ai agent exactly as written. Require it to stop after returning its implementation receipt; do not let it proceed into Ollama, Estate Graph, mobile or federation until every boundary DOD item is proven.
+   865→

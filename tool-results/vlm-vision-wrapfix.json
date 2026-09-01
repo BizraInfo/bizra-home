@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "**PASS**\n\n*   **Prefix Integrity:** The `▸ live organ` prefix remains intact on a single line. There are **no mid-token breaks** (e.g., the arrow and text do not separate, nor does \"organ\" split).\n*   **Wrapping Behavior:** The measurement value wraps cleanly to the second line immediately following the prefix.\n*   **Layout:** No clipping or overflow is observed within the 390px mobile viewport. The monospace green text aligns correctly at the base of each glass pillar card.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1788238514,
+  "id": "20260901125511fc6f43c26f134a51",
+  "model": "glm-5v-turbo",
+  "object": "chat.completion",
+  "request_id": "20260901125511fc6f43c26f134a51",
+  "usage": {
+    "completion_tokens": 110,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 499,
+    "prompt_tokens_details": {
+      "cached_tokens": 2
+    },
+    "total_tokens": 609
+  }
+}

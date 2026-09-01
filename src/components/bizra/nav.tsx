@@ -16,6 +16,7 @@ const LINKS = [
   { href: "#fracture", label: "Fracture" },
   { href: "#loop", label: "Loop" },
   { href: "#proof", label: "Proof" },
+  { href: "#vision", label: "Vision" },
   { href: "#law", label: "Law" },
   { href: "#forest", label: "Forest" },
 ];

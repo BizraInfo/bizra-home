@@ -266,3 +266,38 @@ Stage Summary:
 - The recovered 33-receipt archive is sealed: byte-identical through the entire operation, presented read-only from a snapshot, with a tested backup copy.
 - The public face is unchanged in design and fully live through the fixed transport; the page's every number remains measured and true.
 - Truth ceiling honored: LOCAL_MODEL_CONNECTED=false, PAT_7_ACTIVE=false, NODE0_FOUNDER_MODE_ACTIVE=false, NODE0_CLOSED=false — the first breath is NEXT and it now has a sovereign landing zone.
+
+---
+Task ID: 10
+Agent: main (Z.ai Code)
+Task: Carry the founder's vision share onto the public face — the three pillars (BIZRA Ideology / BIZRA AI / BIZRA Blockchain), their fusion into a new category, the MMORPG-kin shared digital space, the Universal Resource Pool, Proof-of-Impact tokens minted only from real behavior (founder equal under the rules), and the scale horizon (1 node measured → 1B declared) — as a new VISION section between Proof and Law, under the page's honest-label law.
+
+Work Log:
+- Ground truth first: runtime LIVE on 7421 (PUBLIC_REFERENCE, 33 receipts, chain ok, constitution verified, drift []), dev server serving 200, page fully live through the :81 gateway.
+- Verified the vision's key lines against the sealed Root text before using them: the founder's "most important lesson of three years" is in the Third Fact §VI verbatim — كلما ازددت علمًا، ازددت يقينًا بجهلي / "The more I learn, the more certain I become of my ignorance." — used exactly, with source note.
+- Built src/components/bizra/vision.tsx (~520 lines, the established Section grammar):
+  1. Header — "One node is a proof. A billion is a world." + the honest lead (live labeled live, vision labeled vision, nothing is a promise).
+  2. Three pillars — glass cards, each with the field of study and its LIVE ORGAN measured from state (assumption gate: 59 traces judged · 1 forgery refused; PAT: 11 bounded calls · SAT deterministic; local chain: 33 sealed · walk verified) + honest amber sealed-door footnote per pillar.
+  3. The Root's humility quote (Arabic + translation + source) — the bridge between study and fusion.
+  4. Fusion — three gold chips + SVG hairlines converging into the SeedMark; "constitutional space for human impact"; the two-enemies line (blind assumption + debt-interest extraction, not market competition).
+  5. The Space ("A world, not a platform." — kin to MMORPG worlds, entered to return with value; freedom to choose) + The Universal Pool (PoolMark: 12 gold nodes flowing to a glowing center) — both chipped DESIGNED · NOT LIVE.
+  6. "We build the habit, not the actors" — the infrastructure quote as a gold-edged blockquote, tied to the Root→Shoulder→Above pattern.
+  7. Proof of Impact — the honest money: no use no reward / no privilege not even the founder's (3 years, zero tokens taken, same rules when minting begins) / THE PATTERN RUNS TODAY card (verdant, live: 1 mission sealed, refusals recorded) + TOKEN MINT — SEALED DOOR chip (not live · not sold · not promised).
+  8. The Scale Horizon — log-scale ladder: 10⁰ tiny SOLID verdant bar (MEASURED · LIVE NOW, live line: 33 receipts · 1 human node · Asia/Dubai) vs 10³/10⁶/10⁹ DASHED gold bars (DECLARED · VISION) + the honest footer ("Only the first bar is measured… when they become real, they will be measured here — or this page will say why not").
+  9. Closing — "Imagine what every child could hold…" + "For a long time, a few have held the whole…" + the humility footer (we do not claim to be right… we will not repeat the past mistakes).
+- Wired: page.tsx (<Vision state={data}/> between Proof and Law), nav.tsx (Vision anchor after Proof). Fixed one non-existent xs: breakpoint during build.
+- VERIFIED IN THE BROWSER (agent-browser via the :81 gateway — the user's real path):
+  - Desktop 1440×900: section renders with live data in the DOM (all 17 content checks pass: pillar live-organs, Arabic root line, fusion chips, two enemies, space+pool, habit quote, PoI law + founder vow + pattern-today, sealed door, ladder 10⁰ live line, 10⁹, closing, honest note). Nav "Vision" anchor lands at 80px (5rem scroll-margin). Zero page errors, zero console errors.
+  - Mobile 390×844: scrollWidth 390 == clientWidth 390 (zero overflow), footer bottom == 844 (sticky-footer pattern intact, page 20,658px), page-height push verified.
+  - HONEST-UNREACHABLE DRILL on the NEW code path: aborted /api/node0/state → all 5 live lines say "engine silent", PoI says "The runtime is silent — when it returns, its receipts speak here.", page shows the signal-lost/nothing-invented banner, ZERO fabricated numbers; unrouted → auto-recovery (live data back, 0 silent states).
+  - VLM juror: desktop header area 8.5/10 ("award-caliber"), lower section 8.5/10 + ladder/PoI 9.2/10 ("semantically brilliant"), mobile 8.5/10 → its one real defect (live-organ prefix breaking mid-token) fixed with a nowrap prefix span and re-verified PASS by VLM.
+  - Lint clean; tsc --noEmit clean for src/ (pre-existing platform-file errors only in untouched examples/ + skills/); dev.log clean (GET / 200, ✓ Compiled).
+  - Screenshots: tool-results/vision-desktop.png, vision-desktop-mid.png, vision-desktop-ladder.png, vision-mobile.png, vision-mobile-fixed.png, public-seed-with-vision-full.png.
+
+Stage Summary:
+- THE VISION IS VISIBLE: the public face now narrates the full arc — seed → pain → loop → proof → WHAT THE ENGINE IS FOR (the vision: three pillars fused, the space, the pool, impact-only reward, the billion-node horizon) → law → ihsān → forest → invitation.
+- The founder's private trust boundary held: the vision speaks in the page's "we" voice — the people are never named, only the pattern (no privilege, not even the founder's).
+- Honest labels preserved end-to-end: 1 node and every live organ MEASURED; the space, the pool, the mint, and every rung above 10⁰ DECLARED and drawn dashed; the sealed door named.
+- Truth labels: MEASURED (browser DOM values match the runtime snapshot, screenshots, drills, lint, tsc, dev.log); VERIFIED (anchor landing, overflow, footer, honest-unreachable cycle); UNKNOWN — none pending.
+- The runtime (mini-services/bizra-runtime) was NOT touched: 33 receipts stand, the archive stays sealed, the first breath remains next.
+
