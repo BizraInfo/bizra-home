@@ -19,7 +19,7 @@ import { relay } from "./dema";
 import { ingestTrace, recentAdmissible } from "./traces";
 import { proposeCycleHypothesis, patStats } from "./pat";
 import { verifyDiagnosticContract } from "./sat";
-import { issueLease, consumeLease, leaseDecisionHash } from "./fate";
+import { issueLease, consumeLease, leaseDecisionHash, getLease } from "./fate";
 import { contractsSnapshot, contractValue, setContractValue, CONTRACT_CATALOG } from "./contracts";
 
 export interface CycleStep {
@@ -325,24 +325,50 @@ export async function runCycle(): Promise<CycleReport> {
   };
 }
 
-/** Revert a transition. Human authority, sealed, never silent. The before-snapshot is restored. */
-export function revertTransition(transitionId: number): { ok: true; receipt: any; restored: number } | { ok: false; reason: string } {
+/** Revert a transition. Human authority, sealed, never silent. The before-snapshot is restored.
+ *
+ * BOUNDARY-1A §2.9 — kernel order (authority BEFORE mutation):
+ *   validate request → validate transition → validate action envelope (authority)
+ *   → issue/consume lease → apply mutation → append receipt → mark reverted.
+ *   NO authority object → NO mutation. The HTTP boundary is disabled in this
+ *   slice (two-phase proposal/commit is Gate B); the kernel order is repaired now
+ *   so the future surface inherits the correct spine.
+ */
+export function revertTransition(
+  transitionId: number,
+  authority?: { leaseId: string },
+): { ok: true; receipt: any; restored: number } | { ok: false; reason: string } {
+  // 1. validate request
+  if (!Number.isInteger(transitionId) || transitionId <= 0) {
+    return { ok: false, reason: `AUTHORITY_REJECTED: transition id ${transitionId} is malformed` };
+  }
+  // 2. validate current transition
   const t = one<any>("SELECT * FROM transitions WHERE id = ?", transitionId);
-  if (!t) return { ok: false, reason: `transition ${transitionId} not found` };
-  if (t.reverted) return { ok: false, reason: `transition ${transitionId} already reverted at ${t.reverted_at}` };
+  if (!t) return { ok: false, reason: `AUTHORITY_REJECTED: transition ${transitionId} not found — nothing to revert` };
+  if (t.reverted) return { ok: false, reason: `AUTHORITY_REJECTED: transition ${transitionId} already reverted at ${t.reverted_at}` };
+  // 3. validate authority — a consumed FATE lease bound to this exact revert
+  if (!authority?.leaseId) {
+    return {
+      ok: false,
+      reason:
+        "AUTHORITY_REQUIRED: revert refuses to mutate without a consumed FATE lease issued under an exact human consent envelope (two-phase proposal/commit contract — Gate B)",
+    };
+  }
+  const lease = getLease(authority.leaseId);
+  if (!lease || lease.subject !== `REVERT-${transitionId}` || lease.status !== "CONSUMED" || lease.consumed_at == null) {
+    return { ok: false, reason: `AUTHORITY_INVALID: lease '${authority.leaseId}' is not a consumed single-use lease bound to REVERT-${transitionId}` };
+  }
+  // 4-7. authority confirmed BEFORE any mutation: apply, seal, mark
   const before = Number(t.before_value);
   const current = contractValue(t.contract_key);
   setContractValue(t.contract_key, before, `REVERT:${transitionId}`);
-  const leaseRes = issueLease(`REVERT-${transitionId}`, "CONTRACT_TRANSITION", { ttlMs: contractValue("FATE_TTL_MS"), effectClass: "CONTRACT_TRANSITION" });
-  const lease = leaseRes.ok ? leaseRes.lease : null;
-  if (lease) consumeLease(lease.id);
   const receipt = appendReceipt("TRANSITION_REVERT", `REVERT-${transitionId}`, {
     reverted_transition: transitionId,
     contract_key: t.contract_key,
     from: current,
     restored: before,
     authority: "HUMAN",
-    fate_decision_hash: lease ? leaseDecisionHash(lease) : null,
+    fate_decision_hash: leaseDecisionHash(lease),
   });
   run("UPDATE transitions SET reverted = 1, reverted_at = ?, revert_receipt_seq = ? WHERE id = ?", nowIso(), receipt.seq, transitionId);
   relay("DONE", `REVERT-${transitionId}`, `human reverted transition ${transitionId}: ${t.contract_key} restored to ${before}`, receipt.digest);

@@ -1,23 +1,17 @@
 :81 {
-	@transform_port_query {
-		query XTransformPort=*
-	}
-
-	handle @transform_port_query {
-		reverse_proxy localhost:{query.XTransformPort} {
-			header_up Host {host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Real-IP {remote_host}
-		}
-	}
-
-	handle {
-		reverse_proxy localhost:3000 {
-			header_up Host {host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Real-IP {remote_host}
-		}
-	}
+        # BOUNDARY-1A §2.3 — FIXED TRANSPORT.
+        # The public gateway proxies ONLY the Next.js app on :3000.
+        # The browser talks same-origin /api/node0/* to the app's server-side
+        # proxy, which forwards to the single compiled Node0 target
+        # (127.0.0.1:7421). The caller-selected-port query proxy that used to
+        # live here is REMOVED: no request parameter, header, or path segment
+        # may select an arbitrary localhost port or host.
+        handle {
+                reverse_proxy localhost:3000 {
+                        header_up Host {host}
+                        header_up X-Forwarded-For {remote_host}
+                        header_up X-Forwarded-Proto {scheme}
+                        header_up X-Real-IP {remote_host}
+                }
+        }
 }

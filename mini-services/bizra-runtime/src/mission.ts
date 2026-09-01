@@ -10,6 +10,7 @@
  * FATE decision, effect, observer — each sealed into the tamper-evident chain.
  */
 import { existsSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { one, run } from "./store";
 import { nowIso, sha256hex, sha256obj, dubaiDate } from "./hash";
 import { appendReceipt } from "./chain";
@@ -68,7 +69,7 @@ export interface MissionResult {
 }
 
 function newAttemptId(): string {
-  return `ATT-${sha256hex(`${MISSION_ID}|${Date.now()}|${Math.random()}`).slice(0, 12).toUpperCase()}`;
+  return `ATT-${sha256hex(`${MISSION_ID}|${Date.now()}|${randomBytes(8).toString("hex")}`).slice(0, 12).toUpperCase()}`;
 }
 
 export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise<MissionResult> {

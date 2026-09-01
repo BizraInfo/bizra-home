@@ -6,7 +6,7 @@
  * after all four clauses pass. SAT never checks semantics; semantic risk is carried
  * honestly by reversibility, not by pretending a grader understands intent.
  */
-import { all, one, run } from "./store";
+import { all, one, run, HAS_ACTOR_COLUMN } from "./store";
 import { sha256obj, nowIso } from "./hash";
 
 const URL_OR_IP = /(https?:\/\/|ftp:\/\/|(\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)|[A-Za-z0-9+/]{80,}={0,2})/;
@@ -86,13 +86,16 @@ export function verifyDiagnosticContract(input: DiagnosticInput): SatVerdict {
 
   // 1. PROVENANCE — every cited trace exists, was admitted, and its seal is intact.
   const provenanceDetails: string[] = [];
-  const citedRows: { id: number; source: string; sha256: string; admissible: number; ts: string; source2: string; kind: string; correlation: string | null; payload: string }[] = [];
+  const citedRows: { id: number; source: string; sha256: string; admissible: number; ts: string; actor_id: string | null; kind: string; correlation: string | null; payload: string }[] = [];
   let provenancePass = input.citedTraces.length > 0;
   const seen = new Set<number>();
+  const traceCols = HAS_ACTOR_COLUMN
+    ? "id, ts, source, kind, correlation, payload, sha256, admissible, actor_id"
+    : "id, ts, source, kind, correlation, payload, sha256, admissible, NULL AS actor_id";
   for (const id of input.citedTraces) {
     if (seen.has(id)) { provenancePass = false; provenanceDetails.push(`#${id} duplicated`); continue; }
     seen.add(id);
-    const row = one<any>("SELECT id, ts, source, kind, correlation, payload, sha256, admissible FROM traces WHERE id = ?", id);
+    const row = one<any>(`SELECT ${traceCols} FROM traces WHERE id = ?`, id);
     if (!row) { provenancePass = false; provenanceDetails.push(`#${id} does not exist (invented citation)`); continue; }
     const recompute = sha256obj({ ts: row.ts, source: row.source, kind: row.kind, correlation: row.correlation, payload: row.payload });
     if (recompute !== row.sha256) { provenancePass = false; provenanceDetails.push(`#${id} seal mismatch`); continue; }
@@ -126,14 +129,17 @@ export function verifyDiagnosticContract(input: DiagnosticInput): SatVerdict {
   if (cat && input.catalog.filter((c) => c.key === input.targetContract).length !== 1) { disambiguationPass = false; disDetails.push("ambiguous catalog resolution"); }
   clauses.disambiguation = { pass: disambiguationPass, detail: disDetails.length ? disDetails.join("; ") : `unique target ${input.targetContract}, typed numeric transition` };
 
-  // 4. CORROBORATION — independent sources, not volume.
-  const sources = new Set(citedRows.map((r) => r.source));
-  const corroborationPass = sources.size >= input.corroborationMin;
+  // 4. CORROBORATION — independent PRINCIPALS, not volume and not source strings.
+  // BOUNDARY-1A §2.7: an external trace's principal is its authenticated actor_id;
+  // internal traces carry no actor — their principal is their internal call site.
+  // One actor under many labels is still one principal. Volume is not independence.
+  const principals = new Set(citedRows.map((r) => r.actor_id ?? `internal:${r.source}`));
+  const corroborationPass = principals.size >= input.corroborationMin;
   clauses.corroboration = {
     pass: corroborationPass,
     detail: corroborationPass
-      ? `${sources.size} distinct sources (${[...sources].join(", ")}) >= floor ${input.corroborationMin}`
-      : `only ${sources.size} distinct source(s) — floor is ${input.corroborationMin}; volume is not independence`,
+      ? `${principals.size} distinct principal(s) ([${[...principals].join(", ")}]) >= floor ${input.corroborationMin}`
+      : `only ${principals.size} distinct principal(s) ([${[...principals].join(", ")}]) — floor is ${input.corroborationMin}; one actor under many labels is one principal; volume is not independence`,
   };
 
   const failed = Object.entries(clauses).filter(([, v]) => !v.pass).map(([k]) => k);

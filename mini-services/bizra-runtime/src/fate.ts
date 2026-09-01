@@ -10,6 +10,7 @@
  */
 import { all, one, run } from "./store";
 import { nowIso, sha256hex, sha256obj } from "./hash";
+import { randomBytes } from "node:crypto";
 
 export interface Lease {
   id: string;
@@ -43,7 +44,7 @@ export function issueLease(
   if (existing) {
     return { ok: false, reason: `FATE_SINGLE_USE: lease ${existing.id} already bound to ${subject}/${purpose} — never re-issued` };
   }
-  const id = `LEASE-${sha256hex(`${subject}|${purpose}|${nowIso()}|${Math.random()}`).slice(0, 16).toUpperCase()}`;
+  const id = `LEASE-${sha256hex(`${subject}|${purpose}|${nowIso()}|${randomBytes(8).toString("hex")}`).slice(0, 16).toUpperCase()}`;
   const ttl = Math.max(1000, Math.floor(opts.ttlMs));
   run(
     "INSERT INTO leases (id, ts, subject, purpose, network, fs_scope, ttl_ms, expires_at, single_use, status) VALUES (?, ?, ?, ?, 0, 'outbox_only', ?, ?, 1, 'ACTIVE')",

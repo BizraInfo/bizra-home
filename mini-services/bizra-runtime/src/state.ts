@@ -2,7 +2,7 @@
  * BIZRA Node0 — the state snapshot. One call, the whole truth.
  * Every field is measured from sealed state — nothing here is cached, spun, or flattered.
  */
-import { all, one, kv, OUTBOX_DIR, STATE_DIR } from "./store";
+import { all, one, kv, OUTBOX_DIR, STATE_DIR, RUNTIME_MODE, ARCHIVE_SNAPSHOT_DIR } from "./store";
 import { verifyChain, lastReceipts } from "./chain";
 import { verifyConstitution, constitutionRoot } from "./constitution";
 import { contractsSnapshot } from "./contracts";
@@ -32,7 +32,7 @@ function sourceDigest(): string {
   return h.digest("hex");
 }
 
-export function buildState(startedAt: number) {
+export function buildState(startedAt: number, bind?: { host: string; port: number; haltedReason?: string | null }) {
   const chain = verifyChain();
   const constitution = verifyConstitution();
   const sealedSource = kv("source_digest");
@@ -64,10 +64,18 @@ export function buildState(startedAt: number) {
     ok: true,
     runtime: {
       name: "BIZRA Node0 · bizra-runtime",
-      port: 7421,
-      status: kv("status") ?? "CONSTRUCTION",
-      halted_reason: kv("halted_reason"),
-      phase: kv("phase") ?? "CONSTRUCTION",
+      port: bind?.port ?? 7421,
+      bind_host: bind?.host ?? "127.0.0.1",
+      mode: RUNTIME_MODE,
+      status: RUNTIME_MODE === "PUBLIC_REFERENCE"
+        ? (bind?.haltedReason ? "HALTED" : "LIVE")
+        : (kv("status") ?? "CONSTRUCTION"),
+      halted_reason: RUNTIME_MODE === "PUBLIC_REFERENCE" ? (bind?.haltedReason ?? null) : kv("halted_reason"),
+      phase: RUNTIME_MODE === "PUBLIC_REFERENCE" ? "PUBLIC_REFERENCE" : (kv("phase") ?? "CONSTRUCTION"),
+      state_presentation: RUNTIME_MODE === "PUBLIC_REFERENCE"
+        ? "sealed archive presented read-only from an ephemeral snapshot — originals untouched, nothing appended"
+        : "live local founder root — envelope-gated consequential actions only",
+      archive_snapshot_dir: ARCHIVE_SNAPSHOT_DIR,
       sealed_at: kv("sealed_at"),
       live_at: kv("live_at"),
       boot_count: Number(kv("boot_count") ?? "1"),

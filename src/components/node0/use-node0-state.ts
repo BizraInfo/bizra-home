@@ -20,7 +20,7 @@ export interface Node0Snapshot {
 }
 
 /**
- * Polls GET /api/state?XTransformPort=7421 every 2.5s.
+ * Polls the FIXED same-origin transport /api/node0/state every 2.5s.
  * Honest failure model: on error we keep the last real data (marked stale)
  * and never substitute invented values.
  */
