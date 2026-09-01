@@ -2,7 +2,7 @@
  * BIZRA Node0 — the state snapshot. One call, the whole truth.
  * Every field is measured from sealed state — nothing here is cached, spun, or flattered.
  */
-import { all, one, kv, OUTBOX_DIR } from "./store";
+import { all, one, kv, OUTBOX_DIR, STATE_DIR } from "./store";
 import { verifyChain, lastReceipts } from "./chain";
 import { verifyConstitution, constitutionRoot } from "./constitution";
 import { contractsSnapshot } from "./contracts";
@@ -13,6 +13,7 @@ import { traceStats, lastTraces } from "./traces";
 import { demaLog } from "./dema";
 import { outboxListings } from "./executor";
 import { computeSignals } from "./auto";
+import { shoulderState } from "./shoulder";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -81,6 +82,16 @@ export function buildState(startedAt: number) {
       drift: constitution.drift,
       files: constitution.files,
       law: "the 3 root files are sealed — unchangeable even by their author; any byte drift halts the engine",
+    },
+    shoulder: {
+      ...shoulderState(),
+      preview: (() => {
+        try {
+          return readFileSync(join(STATE_DIR, "shoulder", "THE_SHOULDER.md"), "utf8").slice(0, 2400);
+        } catch {
+          return null;
+        }
+      })(),
     },
     node0: {
       phase: kv("phase") ?? "CONSTRUCTION",

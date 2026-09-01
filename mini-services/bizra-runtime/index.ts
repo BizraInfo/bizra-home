@@ -10,6 +10,7 @@
  */
 import { kv, one } from "./src/store";
 import { sealConstitution, verifyConstitution, constitutionRoot } from "./src/constitution";
+import { sealShoulder, shoulderState, shoulderText } from "./src/shoulder";
 import { seedContracts, contractsSnapshot } from "./src/contracts";
 import { appendReceipt, verifyChain, chainHead } from "./src/chain";
 import { relay } from "./src/dema";
@@ -90,6 +91,19 @@ function commission(): { ok: boolean; halted?: string } {
     correlation: "NODE0",
     payload: JSON.stringify({ event: "BOOT", boot_count: bootCount, chain_len: one<any>("SELECT COUNT(*) AS n FROM receipts")?.n ?? 0 }),
   });
+  // THE SHOULDER — sealed once, above the immutable root, under the operator's
+  // typed directive (sealed verbatim in the corpus §0). One-time construction.
+  if (!shoulderState().sealed) {
+    const shoulder = sealShoulder();
+    if (shoulder.sealed && shoulder.receipt_seq) {
+      ingestTrace({
+        source: "runtime",
+        kind: "construction",
+        correlation: "SHOULDER",
+        payload: JSON.stringify({ event: "SHOULDER_SEALED", sha256: shoulder.sha256, receipt: shoulder.receipt_seq }),
+      });
+    }
+  }
   return { ok: true };
 }
 
@@ -147,6 +161,14 @@ const server = Bun.serve({
 
     // State snapshot — always served, even when halted (the truth must be visible).
     if (path === "/api/state") return json(buildState(startedAt));
+
+    // The Shoulder — the sealed knowledge corpus above the root.
+    if (path === "/api/shoulder") {
+      const st = shoulderState();
+      const text = shoulderText();
+      if (text === null) return json({ ok: false, reason: "corpus unreadable" }, 404);
+      return json({ ok: true, shoulder: st, corpus: text, corpus_sha256: st.sha256 });
+    }
 
     if (path === "/api/dema") return json({ ok: true, dema: buildState(startedAt).dema });
 

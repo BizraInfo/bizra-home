@@ -10,6 +10,7 @@ import { statusTone } from "./shared";
 const NAV = [
   { href: "#deck", label: "Deck" },
   { href: "#vault", label: "Vault" },
+  { href: "#shoulder", label: "Shoulder" },
   { href: "#loop", label: "Loop" },
   { href: "#agents", label: "PAT|SAT" },
   { href: "#fate", label: "FATE" },

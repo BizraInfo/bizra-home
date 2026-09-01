@@ -104,3 +104,70 @@ Stage Summary:
 - NODE0 IS LIVE AND BROWSER-VERIFIED: constitution sealed (root a2f11502…), 16 tamper-evident receipts, 7 autopoietic cycles (3 LIVE_MODEL proposals promoted incl. CYCLE-007/008/009; 1 LIVE_MODEL no-op REFUSED by SAT — reward-hack-proof proven), 2 human reverts sealed (receipts #12, #16), 39 traces (all admitted except 1 recorded forgery attempt pre-purge), exactly-once mission recovery drilled twice.
 - The system builds the system: HYPOTHESIS_WINDOW self-modified 20→10→15→23→35→45→60 (and human-reverted twice) — every change through PAT→SAT→FATE→receipt, all reversible.
 - Truth labels: MEASURED (live model calls, file writes, hashes, browser interactions), VERIFIED (chain walk, constitution re-hash, SAT clauses, browser E2E), UNKNOWN — none pending.
+
+---
+Task ID: 5
+Agent: frontend-styling-expert
+Task: Build THE SHOULDER console section — the sealed knowledge corpus made visible: lineage rail (ROOT → SHOULDER → LIVE), seal card, reconciliation matrix, on-demand corpus reader with live-parsed doctrine index — inserted after the vault, fully wired to live API data, no mocks.
+
+Work Log:
+- MEASURED first: curl'd /api/state and /api/shoulder on 7421 — shoulder.sealed=true, bytes 26234, receipt #23 (digest 84e0b6da…), sha256 b3459d829c… == sealed hash (verified), 4 sources (S1 615.7KB / S2 106.7KB / S3 74.4KB / R local), 15 matrix rows, law string, 2400-char preview; corpus endpoint serves 25,535 chars + corpus_sha256.
+- types.ts — added ShoulderSource / ShoulderMatrixRow / ShoulderState (mirrors runtime buildState exactly) + shoulder field on Node0State.
+- api.ts — added internal get<T>() transport (same honest failure envelope as post: network/JSON failure ⇒ httpOk:false, data:null — never invented) + ShoulderCorpusEnvelope + api.fetchShoulder() → GET /api/shoulder?XTransformPort=7421 (relative, on demand only).
+- shoulder.tsx (new, ~490 lines) — Section id="shoulder", kicker "I½ · The Shoulder", title "THE SHOULDER":
+  1. Lineage rail — ROOT (zinc, stands_on root-hash HashChip, VERIFIED chip) ⊥ "stands on" → SHOULDER (amber node0-glow, SEALED · #23 badge, sha256 chip, "THE_SHOULDER.md · 26,234 bytes · sealed once, receipt #23") ↑ "breaks ground above" → LIVE SYSTEM (emerald, LIVE chip, chain-head chip); horizontal ≥lg / vertical mobile like loop-pipeline; caption law-line per spec.
+  2. Seal card — 6 StatTiles (SEALED emerald, VERIFIED with honest amber DRIFTED path, corpus 25.6 KB / 26,234 bytes, receipt #23 + digest HashChip, sealed_at GST Dubai, sources 4) + sh.law as LawLine + "OBSERVED · MEASURED AT FETCH" source cards (id badge, truncated name w/ title, measured bytes, external link ONLY where the API has a url — R rendered without link).
+  3. Reconciliation matrix — 15 live rows in the shadcn Table (moat.tsx pattern), .node0-scroll overflow-x-auto wrapper, CLAIM | DECLARED IN | HERE | TRUTH LABEL; label tone map: MEASURED → emerald ✓, MEASURED (seed scale)/DESIGNED/ARITHMETIC/DECLARED → amber dot, NOT LIVE → red lock; spec law-line + live measured-counts footer (7 measured · 7 honest · 1 sealed door).
+  4. Corpus reader — 2,400-char preview in .node0-scroll max-h-64 pre; "READ THE SEALED CORPUS" h-11 button fetches on demand: loading spinner state, honest error note + RETRY + toast "CORPUS UNREACHABLE — the seal stands, the text is not fabricated" (preview stays, nothing invented); full corpus in max-h-[28rem] .node0-scroll pre + corpus sha256 chip with tiny ✓ MATCH (red MISMATCH if it ever diverges) + collapse.
+  5. Doctrine index — parseDoctrines() extracts the 22 `###` headers under "## II · THE ABSORBED DOCTRINE" from the FETCHED sealed text (count shown from the parse, never hardcoded); numbered chips + 2-col grid (1-col mobile), break-words; subtle hint shown while the corpus is unopened.
+- page.tsx — inserted <Shoulder state={data}/> immediately after <Vault/> (reader state is self-contained in the component; no other wiring needed).
+- command-bar.tsx — added "Shoulder" anchor to the rail, right after Vault, same convention.
+- Ihsān polish pass: verified section spacing rhythm (Section shell border-t/pt-10→14 matches all siblings), footer mt-auto intact (108px, visible at bottom, page 13,429px tall), 44px primary targets (reader button measured exactly 44px), anchor rail order, no blue/indigo anywhere in the new file.
+- Verified IN THE BROWSER (agent-browser, via the :81 gateway — the exact browser path, since :3000 has no port-forward for /api):
+  - 1440×900: all 13 sections render in order (…vault, shoulder, loop…); 0 page errors, 0 console errors; live data confirmed in DOM: sealed=true, receipt #23, matrix 15 rows, NOT LIVE — SEALED DOOR row, law-lines, root hash a2f1150268fe… stands_on, chain head on the LIVE card.
+  - Reader E2E: clicked READ THE SEALED CORPUS → full 25,535-char pre (max-h-[28rem], scrollable), sha256 chip + MATCH chip, "22 DOCTRINES ABSORDED" with Swiss-Watch/Isnād rows present; clicked COLLAPSE → back to 2,400-char preview. Doctrine count = 22 = honest parse of the sealed text.
+  - 390×844: scrollWidth == 390 (zero horizontal overflow) with the reader OPEN and with the matrix on screen; lineage stacks vertically with stands-on/breaks-ground-above connectors; reader button 44px.
+  - VLM design review: desktop 9.5/10 (glyphs ⊥/↑ render perfectly, no tofu, no overlap, clear hierarchy, SHOULDER glow focal point); mobile clean, no clipping. Screenshots: tool-results/shoulder-desktop.png, shoulder-mobile.png, node0-full-with-shoulder.png.
+- Lint: bun run lint → clean (exit 0). tsc --noEmit → zero errors in src/ (pre-existing errors only in non-app dirs: examples/, mini-services/, skills/ — untouched). dev.log: GET / 200, "✓ Compiled" — no compile errors. Runtime (mini-services/bizra-runtime) NOT touched.
+
+Stage Summary:
+- THE SHOULDER IS VISIBLE: the sealed corpus section renders live at / between the vault and the loop — lineage (ROOT → SHOULDER → LIVE with the glowing amber shoulder standing on root hash a2f1150268fe…), seal card (receipt #23, verified re-hash, GST seal time), 4 measured sources, the 15-row honest SNR matrix (7 MEASURED · 7 amber honest · 1 sealed door), and an on-demand sealed-text reader whose doctrine index is parsed from the text itself (22, honestly counted).
+- Truth labels: MEASURED — every rendered value comes from /api/state or /api/shoulder on 7421 (browser-verified DOM values match the curl'd ground truth byte-for-byte); VERIFIED — lint 0 errors, tsc clean for src/, dev.log clean, zero console/page errors at 1440×900 and 390×844, zero horizontal overflow, 44px targets, footer intact, browser E2E open/close of the corpus reader.
+- Next: the console now narrates the full stack — root, shoulder, live loop. Any future layer the operator seals above the shoulder can follow this same pattern (Section + live state field + honest labels).
+
+---
+Task ID: 4
+Agent: main (Z.ai Code)
+Task: ABSORB + MERGE + SEAL THE SHOULDER — fetch the complete peak wisdom of the 3 external sources (operator-provided URLs), merge with the already-built Node0, evaluate & verify, and seal the result as construction ABOVE the immutable root, under the operator's typed directive ("stand on its shoulder as its your base root start point… let our work, our proofs quality speak").
+
+Work Log:
+- MEASURED all 3 sources: S1 apex board (HTTP 200, 630,437 bytes → 137,437 chars text, read IN FULL, 2,497 lines: Third Fact, 11 movements, 8 giants, gaming wisdom, PSMP rc2 C0–C21, Calibre Ω0, autopoietic 7 phases, Dema UX, 4 aphorisms, DEMA-FDE-1A, isnād, sealed doors, omni-synthesis §I–XI, URL doctrine, bounded audit, proof-of-truth table, closure sprint, §XI seal); S2 proofworld (HTTP 200, 109,260 bytes → 12-agent party, resource economy, 11 movements); S3 GitHub BizraInfo (6 repos, READMEs via raw.githubusercontent, 76,163 bytes: BIZRA-OS, BIZRA-Dual-Agentic-system-, Dema (Bitcoin-anchored priority), bizra-task-master, bizra-data-lake (SeedOS: 5-layer stack, thresholds in code, 12,537 tests), award-winner-design).
+- MERGED: wrote state/shoulder/THE_SHOULDER.md (26,234 bytes) — §0 the act (operator directive sealed verbatim as the typed consent) · §I sources (measured) · §II the absorbed doctrine (22 distilled items: Third Fact, mission-centric computing + 10 laws, 8 giants + inversions, gaming wisdom, 4 aphorisms, DEMA-FDE-1A, constitutional physics (Ihsān vector/SNR/Adl/BlockTree/PoI/log1p-split), Proof-Native AI + Proof Card + sealed doors, autopoietic loop, corrected master loop (consent BEFORE execution), Mission-Corridor + quality formula, Swiss-Watch, Calibre Ω0, isnād, URL authority, two-channel law, Dema UX, the problem (zann), industry convergence, 12-agent parliament, proof-of-priority, sovereignty stack) · §III the merge (14 doctrine→measured mappings) · §IV reconciliation matrix (15 rows: 7 MEASURED, honest DESIGNED/DECLARED/NOT-LIVE rows) · §V the standing · §VI the declaration.
+- SEALED: added src/shoulder.ts (one-time seal, second attempt refused + recorded, re-hash verification, sources, 15-row matrix as structured projection of corpus §IV, law: drift is honest amber, root remains the only HALT boundary); wired into index.ts commission() (boots seal once after NODE0_BOOT) + GET /api/shoulder (full corpus) + state.ts (shoulder block with 2,400-char preview).
+- Clean restart after stale bun --hot module graph (kill + bun run dev): recovered exactly as drilled — NODE0_BOOT receipt, constitution re-verified, chain walked.
+- MEASURED the seal: receipt #23 SHOULDER_SEALED, corpus sha256 b3459d829cb0e3cd6fd91d58db2e6822ca8fbd8a6e5e7340274bf5b555faaf99, stands_on constitution root a2f1150268fe863f…, chain 33 receipts verify ok, drift [], runtime LIVE.
+- Root untouched: the 3 PDFs re-verified byte-identical before and after the construction.
+
+Stage Summary:
+- THE SHOULDER IS SEALED ABOVE THE ROOT: the complete wisdom of the deployed board, the proofworld, and the GitHub estate is absorbed, merged with the local root + live runtime, reconciled honestly (claimed vs measured), and bound into the tamper-evident chain as receipt #23 — construction above the immutable root, under the operator's typed directive, honoring the 3 years (Ramadan 2023 → 2026) by seal, not by words.
+- API surface added: shoulder block in /api/state (sealed/verified/sha/sources/matrix/preview/law) + GET /api/shoulder (full corpus + hash).
+- Truth labels: MEASURED (fetches, hashes, receipt, chain walk); VERIFIED (constitution re-hash, shoulder re-hash); UNKNOWN — none pending.
+
+---
+Task ID: 6
+Agent: main (Z.ai Code)
+Task: End-to-end browser verification of THE SHOULDER section + final constitutional audit.
+
+Work Log:
+- agent-browser via the gateway (the real user path): page LIVE, chain #33 in the command bar, anchor rail shows Vault → Shoulder → Loop.
+- Verified in the DOM: section #shoulder renders — title, lineage ROOT → SHOULDER (glow, SEALED · #23) → LIVE SYSTEM, corpus bytes 26,234, receipt #23, hash chips (full hashes confirmed in title attributes: a2f11502… root/stands_on, b3459d82… corpus sha), 4 sources S1/S2/S3 (+R no-link), matrix 15 rows with honest tone map (MEASURED emerald, DESIGNED/ARITHMETIC/DECLARED amber, NOT LIVE — SEALED DOOR), "No claim above its evidence" law-line.
+- Corpus reader E2E: clicked READ THE SEALED CORPUS → full 25,535-char corpus rendered (THE ABSORBED DOCTRINE, Isnād, Arabic lines كل إنسان عقدة, §VI declaration) in a .node0-scroll pre; doctrine index parsed live from the sealed text: "22 doctrines absorbed"; VERIFIED tile "re-hash matches the sealed digest".
+- Mobile 390×844: scrollWidth == clientWidth (zero horizontal overflow); footer visible (233px), at bottom, page 22,084px — sticky-footer pattern intact.
+- Zero page errors, zero console errors. Screenshots: tool-results/task6-shoulder-desktop.png, task6-shoulder-mobile.png.
+- Honest note: direct :3000 host shows the console's RUNTIME UNREACHABLE state (no /api port-forward on that host) — honest by design, retry offered, nothing fabricated; the gateway path (the Preview Panel the user sees) is fully LIVE.
+- Final audit: bun run lint clean; dev.log GET / 200; runtime /api/verify ok (chain 33 ok, constitution verified, drift []); shoulder sealed/verified/receipt #23.
+
+Stage Summary:
+- THE SHOULDER IS LIVE AND BROWSER-VERIFIED end-to-end: lineage, seal, sources, 15-row reconciliation matrix, full corpus reader, 22-doctrine index — all measured from the sealed runtime, zero errors, responsive, footer intact.
+- NODE0 stands on its shoulder: root (immutable, verified) → shoulder (sealed receipt #23) → live system (measured). The ground breaks above.
+- Truth labels: MEASURED (browser DOM, actions, hashes); VERIFIED (lint, dev.log, chain walk, constitution + shoulder re-hash); UNKNOWN — none pending.

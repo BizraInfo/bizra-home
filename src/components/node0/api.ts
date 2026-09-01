@@ -30,6 +30,20 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<{ h
   }
 }
 
+async function get<T>(path: string): Promise<{ httpOk: boolean; data: T | null }> {
+  try {
+    const res = await fetch(`${path}?${X_TRANSFORM_PORT}`, { cache: "no-store" });
+    try {
+      return { httpOk: res.ok, data: (await res.json()) as T };
+    } catch {
+      return { httpOk: false, data: null };
+    }
+  } catch {
+    // network-level failure — honest unreachable, never invented values
+    return { httpOk: false, data: null };
+  }
+}
+
 export interface MissionEnvelope {
   ok: boolean;
   result?: {
@@ -66,6 +80,12 @@ export interface RevertEnvelope {
   receipt?: { seq: number; digest: string };
 }
 
+export interface ShoulderCorpusEnvelope {
+  ok: boolean;
+  corpus: string;
+  corpus_sha256: string;
+}
+
 export const api = {
   /** Run (or drill) mission MUMU-DAILY-STATE-RELIEF-0A. */
   runMission(crashAfter?: "OBSERVE"): Promise<{ httpOk: boolean; data: MissionEnvelope | null }> {
@@ -95,5 +115,10 @@ export const api = {
   /** Revert an autopoietic transition — human authority, sealed. */
   revertTransition(id: number): Promise<{ httpOk: boolean; data: RevertEnvelope | null }> {
     return post<RevertEnvelope>(`/api/transition/${id}/revert`, {});
+  },
+
+  /** Fetch the full sealed corpus (THE_SHOULDER.md) — on demand, for the reader. */
+  fetchShoulder(): Promise<{ httpOk: boolean; data: ShoulderCorpusEnvelope | null }> {
+    return get<ShoulderCorpusEnvelope>("/api/shoulder");
   },
 };

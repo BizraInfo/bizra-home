@@ -12,6 +12,7 @@ import { useNode0State } from "@/components/node0/use-node0-state";
 import { CommandBar } from "@/components/node0/command-bar";
 import { Hero } from "@/components/node0/hero";
 import { Vault } from "@/components/node0/vault";
+import { Shoulder } from "@/components/node0/shoulder";
 import { LoopPipeline } from "@/components/node0/loop-pipeline";
 import { DualAgent } from "@/components/node0/dual-agent";
 import { Fate } from "@/components/node0/fate";
@@ -243,6 +244,7 @@ export default function Home() {
                 onCrashDrill={() => void runMission("OBSERVE")}
               />
               <Vault state={data} />
+              <Shoulder state={data} />
               <LoopPipeline state={data} />
               <DualAgent state={data} />
               <Fate state={data} />

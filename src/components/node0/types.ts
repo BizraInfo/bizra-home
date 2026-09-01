@@ -277,10 +277,47 @@ export interface OutboxFile {
   preview: string;
 }
 
+/* ------------------------------------------------------------------ */
+/* THE SHOULDER — the sealed knowledge corpus above the root            */
+/* ------------------------------------------------------------------ */
+
+export interface ShoulderSource {
+  id: string; // "S1" | "S2" | "S3" | "R"
+  name: string;
+  url: string | null;
+  bytes: number;
+}
+
+export interface ShoulderMatrixRow {
+  claim: string;
+  declared_in: string;
+  status_here: string;
+  label: string;
+}
+
+export interface ShoulderState {
+  sealed: boolean;
+  corpus: string;
+  sha256: string | null;
+  sealed_sha256: string | null;
+  bytes: number | null;
+  sealed_at: string | null;
+  receipt_seq: number | null;
+  receipt_digest: string | null;
+  verified: boolean | null;
+  drift: boolean;
+  sources: ShoulderSource[];
+  stands_on: string | null;
+  matrix: ShoulderMatrixRow[];
+  law: string;
+  preview: string | null;
+}
+
 export interface Node0State {
   ok: boolean;
   runtime: RuntimeInfo;
   constitution: ConstitutionInfo;
+  shoulder: ShoulderState;
   node0: Node0Info;
   chain: ChainInfo;
   contracts: Contract[];
