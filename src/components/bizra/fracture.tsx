@@ -32,6 +32,47 @@ const FRACTURES = [
   },
 ] as const;
 
+/** The measured pain — evidence receipt, verbatim from the sealed Root
+ *  (BIZRA — The Third Fact §I: global debt + AI infrastructure scale).
+ *  Every figure is cited in the Root itself — nothing here is ours to claim. */
+const PAIN: Array<{ value: string; label: string; source: string; tone: "ember" | "solar" }> = [
+  {
+    value: "$102T",
+    label: "Global public debt reached in 2024",
+    source: "UNCTAD [1]",
+    tone: "ember",
+  },
+  {
+    value: "3.4B",
+    label: "People spending more on debt than health or education",
+    source: "UNCTAD [1]",
+    tone: "ember",
+  },
+  {
+    value: "$318T",
+    label: "Total global debt · ~328% of world GDP",
+    source: "IIF monitor [4] · secondary",
+    tone: "ember",
+  },
+  {
+    value: "945 TWh",
+    label: "Projected data-centre electricity by 2030",
+    source: "IEA [2]",
+    tone: "solar",
+  },
+  {
+    value: "$400B+",
+    label: "CAPEX by 5 large tech firms in 2025 · rising ~75% in 2026",
+    source: "IEA [3]",
+    tone: "solar",
+  },
+];
+
+const painTone: Record<"ember" | "solar", string> = {
+  ember: "text-ember",
+  solar: "text-solar",
+};
+
 /** The seven SNR drift signals (OpenAI-incident taxonomy, absorbed into the sealed
  *  Shoulder corpus) mapped to the Node0 guards that answer each one. */
 const GUARDS: Array<{ snr: number; signal: string; guard: string }> = [
@@ -96,6 +137,56 @@ export function Fracture() {
             );
           })}
         </div>
+
+        {/* The measured pain — the numbers the Root itself cites */}
+        <Reveal delay={0.18}>
+          <div
+            className="bz-glass mx-auto mt-12 max-w-4xl rounded-2xl p-6 sm:mt-16 sm:p-8"
+            aria-label="The measured pain — evidence receipt from the sealed root"
+          >
+            <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-mono text-[0.7rem] tracking-[0.24em] text-gold-500 uppercase">
+                The measured pain — evidence receipt
+              </p>
+              <p className="font-mono text-[0.62rem] tracking-[0.14em] text-cream/35 uppercase">
+                verified citations · sealed in the root · third fact §I
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-6">
+              {PAIN.map((p) => (
+                <div key={p.value} className="flex flex-col last:col-span-2 sm:last:col-span-1">
+                  <p
+                    className={`font-mono text-2xl tabular-nums sm:text-[1.7rem] ${painTone[p.tone]}`}
+                  >
+                    {p.value}
+                  </p>
+                  <p className="mt-1.5 text-[0.72rem] font-light leading-snug text-cream/55">
+                    {p.label}
+                  </p>
+                  <p className="mt-1.5 font-mono text-[0.58rem] tracking-[0.12em] text-cream/30 uppercase">
+                    {p.source}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-7 border-t border-white/5 pt-6">
+              <p className="text-center text-[0.82rem] font-light leading-relaxed text-cream/50">
+                Two patterns, named in the Root:{" "}
+                <span className="text-ember/90">blind assumption</span> — and{" "}
+                <span className="text-ember/90">debt-interest extraction</span>.
+                BIZRA was born to stand against both.
+              </p>
+              <p
+                className="mt-3 text-center font-arabic text-[0.95rem] leading-relaxed text-gold-500/50"
+                dir="rtl"
+                lang="ar"
+              >
+                لا نُفترض ولا نقبل الظنّ المجرّد — وإذا كان الافتراض أمرًا لا مفرّ منه،
+                فإننا نفترض بإحسان
+              </p>
+            </div>
+          </div>
+        </Reveal>
 
         <Reveal delay={0.2}>
           <p className="mx-auto mt-16 max-w-3xl text-center font-serif text-[1.75rem] leading-[1.4] italic text-cream sm:mt-20 sm:text-[2.15rem]">

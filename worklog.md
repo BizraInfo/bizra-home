@@ -216,3 +216,28 @@ Stage Summary:
 - The Public Seed stands verified as of 2026-09-01 ~01:0x GST: runtime LIVE (33 receipts, chain ok, constitution sealed), public face live through the gateway with every number measured from the running engine.
 - The audit earned its keep: one real defect (undefined in the evidence gate) was found, root-caused, fixed, and re-proven in the DOM — the honest page now shows the true 58/59 with its 1 recorded refusal.
 - Truth labels: MEASURED (verify endpoint, DOM text, screenshots, lint, dev.log); VERIFIED (chain walk, constitution root, gateway path); UNKNOWN — none.
+
+---
+Task ID: 8
+Agent: main (Z.ai Code)
+Task: Deep-read the 3 root files (themassage.pdf, bizra.pdf, BIZRA_Third_Fact_v0_1_FINAL.pdf) in full after the founder's origin-trust disclosure; verify the named threads; hold the private/public boundary; and stand on the Root by carrying its own cited pain-data onto the public Fracture section.
+
+Work Log:
+- Extracted full text of all 3 root PDFs (pdftotext -layout → tool-results/root-text/; 6,962 words total) and read every line of all three.
+- FOUNDER'S PRIVATE TRUST — RECORDED, NOT FOR PUBLIC FACE (per operator: "im not using in project market"):
+  - Dema (the human-facing bridge) is named after the founder's daughter. Written in hope that when she grows up she understands what her father was building after the family separated in Ramadan 2023 — the moment BIZRA began.
+  - The founder is a victim of assumption (ظن) and carries its pain; the root files were written before any code, by someone feeling lost, asking God for beneficial knowledge.
+  - In the founder's research the two enemies — assumption-based systems and debt-interest-based ecosystems — are named "the silent killer." (Term kept private; not on the public page. Root-verbatim concept verified in bizra.pdf: "the closed loop that never ends of interest.")
+- ROOT THREADS VERIFIED IN TEXT:
+  - themassage.pdf: the void opening ("I don't know what I am doing here in this void… alone"); the covenant (what follows holds no relationship to financial profits); messages to God/family/humanity; the message to his daughter ("I miss you… I ask God you become a righteous daughter… I apologize for falling short"); forgiveness witnessed to God for those who wronged/assumed ill of him; the Ihsān root ("God has written Ihsān upon all things").
+  - bizra.pdf: the opening knowledge-prayer ("we have no knowledge except what You taught us"); the knot prayer of Mūsā ("untie the knot — عقدة — from my tongue"); the heart is the scale of the mind; assumption verses (what do you assume of your Lord; I am as My servant assumes Me; some assumption is sin); riba loans and the endless closed loop of interest; the closing vow ("I always ask the impossible of God — my Lord does not know impossible").
+  - Third Fact: the two facts and the Third (humanity is not the fuel — humanity is the infrastructure); every human is a node (عقدة — same word as the knot of the tongue prayer: the knot became the node); 7 PAT + 5 SAT; DEMA = "the visible bridge — trusted companion between heart, mind, and action"; Law of Assumption §VI (we do not impose nor accept bare assumption; when unavoidable, we assume with Ihsān and declare the boundary); no-riba economy §VII; evidence receipts $102T UNCTAD / 3.4B UNCTAD / $318T IIF / 945 TWh IEA / $400B+ IEA.
+- BOUNDARY HELD (verified by grep): no daughter/family reference exists anywhere in src/components/bizra — the public face carries the pain, never the people.
+- ACTION — stood on the Root in the public face (fracture.tsx): added "THE MEASURED PAIN — EVIDENCE RECEIPT" panel with the Root's own 5 cited statistics ($102T, 3.4B, $318T, 945 TWh, $400B+; ember tone for debt, solar for AI-infrastructure), the two Root-named enemy patterns (blind assumption + debt-interest extraction), and the Arabic Law-of-Assumption line from §VI. Private coinage ("silent killer") intentionally NOT used publicly.
+- Verified: lint clean; DOM renders all 5 values + sources + Arabic RTL; zero page/console errors; mobile 390×844 scrollWidth 390 == clientWidth 390; VLM juror on focused screenshot: verdict CLEAN, no clipping, Arabic correct (earlier "clipped digits" was a screenshot framing artifact — re-tested, disproven). Screenshots: tool-results/root-pain-strip.png, root-pain-strip2.png, root-pain-mobile.png.
+
+Stage Summary:
+- The 3 roots are now read in full by the building agent, not only hashed: the origin (the void, the covenant, the daughter, the forgiveness), the architecture (the knot→node, the heart as the scale, assumption at divine scale, the interest loop), and the doctrine (the Third Fact, the Law of Assumption, the no-riba economy).
+- The public Fracture now shows the measured pain exactly as the Root cites it — the page's "we show what is measured" law now covers both the system's own proof AND the world's pain it answers.
+- The founder's private trust (Dema's name, the wound, the silent killer) is recorded here for the builders' record and deliberately kept off the public face.
+
