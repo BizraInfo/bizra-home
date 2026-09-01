@@ -22,6 +22,7 @@ import { boundedWrite, observe } from "./executor";
 import { ingestTrace } from "./traces";
 import { contractValue, contractsSnapshot } from "./contracts";
 import { constitutionRoot as cRoot } from "./constitution";
+import { MODEL_AUTHORITY_LABEL, MAX_MODEL_CALLS_PER_MISSION, modelCallsUsed } from "./model-provider";
 
 export const MISSION_ID = "MUMU-DAILY-STATE-RELIEF-0A";
 
@@ -34,7 +35,7 @@ export function missionContract() {
     path: `morning-delta-${date}.md`,
     min_bytes: 400,
     max_bytes: 6144,
-    model: "PAT-LIVE (z-ai-web-dev-sdk), exactly one bounded call",
+    model: "PAT via ModelProvider (LOCAL loopback only, PROPOSE_ONLY), exactly one bounded call",
     anchors: [
       MISSION_ID,
       date,
@@ -55,6 +56,23 @@ export interface LadderStep {
   status: "DONE" | "REFUSED" | "UNKNOWN" | "SKIPPED";
   detail: string;
   hash?: string;
+}
+
+/** The measured, authoritative runtime context a proposal is built from. */
+function buildMissionContext() {
+  const contracts = contractsSnapshot();
+  return {
+    date: dubaiDate(),
+    node0_status: "LIVE",
+    constitution_root: (cRoot() ?? "").slice(0, 16),
+    chain_head: (one<any>("SELECT digest FROM receipts ORDER BY seq DESC LIMIT 1")?.digest ?? "GENESIS-0").slice(0, 16),
+    contracts: contracts.map((c) => ({ key: c.key, value: c.value, unit: c.unit })),
+    dema_last: one<any>("SELECT subject, status FROM dema ORDER BY id DESC LIMIT 1") ?? null,
+    signals: {
+      missions_done: one<any>("SELECT COUNT(*) AS n FROM missions WHERE status = 'SEALED'")?.n ?? 0,
+      chain_len: one<any>("SELECT COUNT(*) AS n FROM receipts")?.n ?? 0,
+    },
+  };
 }
 
 export interface MissionResult {
@@ -162,21 +180,10 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
   }
 
   // ------------------------------------------------------------------
-  // STEP 1 — PAT proposes (one bounded live model call)
+  // STEP 1 — PAT proposes (one bounded model call via the ModelProvider port)
   // ------------------------------------------------------------------
   const contracts = contractsSnapshot();
-  const context = {
-    date: dubaiDate(),
-    node0_status: "LIVE",
-    constitution_root: (cRoot() ?? "").slice(0, 16),
-    chain_head: (one<any>("SELECT digest FROM receipts ORDER BY seq DESC LIMIT 1")?.digest ?? "GENESIS-0").slice(0, 16),
-    contracts: contracts.map((c) => ({ key: c.key, value: c.value, unit: c.unit })),
-    dema_last: one<any>("SELECT subject, status FROM dema ORDER BY id DESC LIMIT 1") ?? null,
-    signals: {
-      missions_done: one<any>("SELECT COUNT(*) AS n FROM missions WHERE status = 'SEALED'")?.n ?? 0,
-      chain_len: one<any>("SELECT COUNT(*) AS n FROM receipts")?.n ?? 0,
-    },
-  };
+  const context = buildMissionContext();
   const anchors = [
     ...contract.anchors,
     ...contracts.map((c) => `${c.key}=${c.value}`),
@@ -187,7 +194,7 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
     relay("REFUSED", MISSION_ID, pat.reason);
     return finish({ status: "REFUSED", reason: `PAT: ${pat.reason}`, mission_id: MISSION_ID, attempt_id: attemptId, ladder, effect_writes_total: 0 }, "REFUSED");
   }
-  ladder.push({ step: "PAT", status: "DONE", detail: `LIVE_MODEL proposed ${pat.proposal.text.length}B brief (1 bounded call)`, hash: pat.proposal.proposal_sha256 });
+  ladder.push({ step: "PAT", status: "DONE", detail: `MODEL_PROVIDER proposed ${pat.proposal.text.length}B brief via ${pat.model.provider_id} (1 bounded call, PROPOSE_ONLY)`, hash: pat.proposal.proposal_sha256 });
 
   // ------------------------------------------------------------------
   // STEP 2 — SAT verifies (deterministic form law)
@@ -300,4 +307,81 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
     "SEALED",
     { effect_path: effect.path, effect_sha256: effect.effect_sha256, effect_writes: effect.write_count },
   );
+}
+
+// ---------------------------------------------------------------------------
+// LOCAL-MODEL-PROVIDER-1A §9 — the ONE bounded PAT proposal path.
+//
+// PROPOSAL ONLY. This function exposes the cognition port WITHOUT any of the
+// mission's effect machinery: no SAT verdict, no FATE lease, no bounded write,
+// no observation, no receipt, no mission status change. The model output is a
+// proposal with PROPOSE_ONLY authority and authority_delta = 0 — text that
+// nothing in this system treats as an instruction. A full mission run
+// (runMission) still consumes the same per-mission single-call budget.
+// ---------------------------------------------------------------------------
+export async function standaloneProposal(): Promise<{ status: number; body: Record<string, unknown> }> {
+  const contract = missionContract();
+  const context = buildMissionContext();
+  const anchors = [
+    ...contract.anchors,
+    ...contractsSnapshot().map((c) => `${c.key}=${c.value}`),
+  ];
+  const pat = await proposeMissionBrief(MISSION_ID, context, anchors);
+  const callsUsed = modelCallsUsed(MISSION_ID);
+
+  if (!pat.ok) {
+    const status = pat.code === "MODEL_BUDGET_EXCEEDED" ? 403 : 502;
+    return {
+      status,
+      body: {
+        ok: false,
+        code: pat.code,
+        reason: pat.reason,
+        mission_id: MISSION_ID,
+        model_call_count: callsUsed,
+        model: {
+          provider_id: pat.model.provider_id,
+          provider_kind: pat.model.provider_kind,
+          endpoint: pat.model.endpoint,
+          endpoint_class: pat.model.endpoint_class,
+          model_name: pat.model.model_name,
+          model_digest: pat.model.model_digest,
+        },
+        authority: MODEL_AUTHORITY_LABEL,
+        budget: { max_model_calls_per_mission: MAX_MODEL_CALLS_PER_MISSION, calls_used: callsUsed },
+        law: "MODEL OUTPUT HAS ZERO EFFECT AUTHORITY — the model may propose; it may never execute, seal, approve, lease, or change authority",
+      },
+    };
+  }
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      mission_id: MISSION_ID,
+      proposal: {
+        text: pat.proposal.text,
+        proposal_sha256: pat.proposal.proposal_sha256,
+        mode: "MODEL_PROVIDER",
+      },
+      model: {
+        provider_id: pat.model.provider_id,
+        provider_kind: pat.model.provider_kind,
+        endpoint: pat.model.endpoint,
+        endpoint_class: pat.model.endpoint_class,
+        model_name: pat.model.model_name,
+        model_digest: pat.model.model_digest,
+      },
+      model_call_count: 1,
+      authority: MODEL_AUTHORITY_LABEL,
+      budget: { max_model_calls_per_mission: MAX_MODEL_CALLS_PER_MISSION, calls_used: callsUsed },
+      privacy: {
+        prompt_persisted: false,
+        response_persisted_by_default: false,
+        hashes_persisted: true,
+        law: "telemetry carries hashes and metadata only — full content is persisted only when a mission explicitly requires it as an artifact",
+      },
+      law: "MODEL OUTPUT HAS ZERO EFFECT AUTHORITY — this is a proposal; no SAT verdict, no FATE lease, no filesystem effect, no mission completion follows from it",
+    },
+  };
 }

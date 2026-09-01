@@ -148,6 +148,31 @@ if (RESOLVED.mode === "LOCAL_FOUNDER") {
       expires_at TEXT NOT NULL,
       consumed_at TEXT NOT NULL
     );
+    -- LOCAL-MODEL-PROVIDER-1A: privacy-safe model call telemetry. NO prompt or
+    -- response content is ever stored here — hashes and metadata only (§10).
+    -- One row per ATTEMPT: a failed attempt still consumes the mission's
+    -- single-call budget (no automatic retry, §11).
+    CREATE TABLE IF NOT EXISTS model_call_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ts TEXT NOT NULL,
+      mission_id TEXT NOT NULL,
+      provider_id TEXT NOT NULL,
+      endpoint_class TEXT NOT NULL,
+      model_name TEXT,
+      model_digest TEXT,
+      request_sha256 TEXT NOT NULL,
+      response_sha256 TEXT,
+      request_bytes INTEGER,
+      response_bytes INTEGER,
+      started_at TEXT,
+      ended_at TEXT,
+      duration_ms INTEGER,
+      result_status TEXT NOT NULL,
+      model_call_count INTEGER NOT NULL,
+      authority TEXT NOT NULL DEFAULT 'PROPOSE_ONLY',
+      authority_delta INTEGER NOT NULL DEFAULT 0,
+      detail TEXT
+    );
   `);
   // migration for pre-boundary/pre-1B local roots (LOCAL roots only; the public archive is never altered)
   try {

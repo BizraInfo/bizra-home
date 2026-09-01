@@ -44,7 +44,7 @@ export interface ActionEnvelope {
   actor_id?: string;
 }
 
-export const ACTION_CLASSES = new Set(["TRACE_INGEST", "MISSION_RUN", "CYCLE_RUN", "TRANSITION_REVERT"]);
+export const ACTION_CLASSES = new Set(["TRACE_INGEST", "MISSION_RUN", "CYCLE_RUN", "TRANSITION_REVERT", "MODEL_CONFIG_SET", "PAT_PROPOSE"]);
 
 /** Labels a caller actor_id may never claim — internal organs and authority namespaces. */
 const RESERVED_ACTOR_LABELS = new Set([

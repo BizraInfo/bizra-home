@@ -14,6 +14,7 @@ import { demaLog } from "./dema";
 import { outboxListings } from "./executor";
 import { computeSignals } from "./auto";
 import { shoulderState } from "./shoulder";
+import { modelStateProjection, modelCallLog } from "./model-provider";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -125,9 +126,16 @@ export function buildState(startedAt: number, bind?: { host: string; port: numbe
     contracts: contractsSnapshot(),
     pat: {
       organs: "PAT proposes — never executes, never verifies, never seals",
-      mode: "LIVE_MODEL (z-ai-web-dev-sdk) + PAT-0 deterministic triggers",
+      mode: "MODEL_PROVIDER (local loopback provider, PROPOSE_ONLY) + PAT-0 deterministic triggers",
       ...patStats(),
       last: lastPat(),
+    },
+    // LOCAL-MODEL-PROVIDER-1A: the truthful local-model projection.
+    // PUBLIC_REFERENCE: static NOT_CONNECTED_REFERENCE_MODE — never a probe.
+    // LOCAL_FOUNDER: the last cached observation (state building never probes).
+    model: {
+      ...modelStateProjection(),
+      call_log: modelCallLog(6),
     },
     sat: {
       organs: "SAT verifies — deterministic, model-blind, nothing to reward-hack",

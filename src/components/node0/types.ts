@@ -103,6 +103,40 @@ export interface Pat {
   last: PatEntry | null;
 }
 
+/* ------------------------------------------------------------------ */
+/* LOCAL-MODEL-PROVIDER-1A — the truthful local-model projection        */
+/* ------------------------------------------------------------------ */
+
+export interface ModelObserved {
+  model_name: string;
+  model_digest: string | null;
+  family: string;
+  parameter_size: string;
+  quantization_level: string;
+  size: number | null;
+  modified_at: string;
+  observed_at: string;
+}
+
+export interface ModelInfo {
+  /** PUBLIC_REFERENCE: static "NOT_CONNECTED_REFERENCE_MODE" — never a probe. */
+  model_status:
+    | "NOT_CONNECTED_REFERENCE_MODE"
+    | "UNCONFIGURED"
+    | "NOT_DETECTED"
+    | "READY"
+    | "DEGRADED"
+    | string;
+  probed?: boolean;
+  provider?: { provider_id: string; kind: string; endpoint: string; endpoint_class: string } | null;
+  selected?: { model_name: string | null; model_digest: string | null } | null;
+  observed?: ModelObserved | null;
+  probe_failure?: { code: string; reason: string } | null;
+  authority?: { model_authority: string; authority_delta: number };
+  law?: string;
+  call_log?: unknown[];
+}
+
 export interface SatClause {
   pass: boolean;
   detail: string;
@@ -339,6 +373,7 @@ export interface Node0State {
   chain: ChainInfo;
   contracts: Contract[];
   pat: Pat;
+  model?: ModelInfo;
   sat: Sat;
   fate: Fate;
   traces: Traces;

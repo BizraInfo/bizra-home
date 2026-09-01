@@ -11,7 +11,7 @@
 import { SeedMark } from "./seed-mark";
 import { LiveDot } from "./shared";
 import { truncHash } from "./format";
-import { classifyRuntime, runtimeLabel, runtimeDotTone, NODE0_ACTIVE_FALSE_LABEL } from "./runtime-status";
+import { classifyRuntime, runtimeLabel, runtimeDotTone, NODE0_ACTIVE_FALSE_LABEL, classifyModel, modelLabel } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Hero({ state, error }: { state: Node0State | null; error: string | null }) {
@@ -23,6 +23,10 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
   const chainLen = state?.chain?.len;
   const chainOk = state?.chain?.ok;
   const rootHash = state?.constitution?.root_hash;
+  // LOCAL-MODEL-PROVIDER-1A §15: the truthful local-model line. READY renders
+  // only from the runtime's verified observation — never from configuration.
+  const modelKind = classifyModel(state?.model);
+  const modelLine = modelLabel(modelKind, state?.model);
 
   return (
     <section
@@ -119,6 +123,13 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
               <>
                 <span className="text-cream/25" aria-hidden="true">·</span>
                 <span className="text-cream/50">{NODE0_ACTIVE_FALSE_LABEL}</span>
+              </>
+            ) : null}
+            {reachable && modelLine ? (
+              <>
+                <span className="text-cream/25" aria-hidden="true">·</span>
+                <span className="text-cream/40">LOCAL MODEL</span>
+                <span className={modelKind === "READY" ? "text-verdant/80" : "text-cream/50"}>{modelLine}</span>
               </>
             ) : null}
             <span className="text-cream/25" aria-hidden="true">·</span>

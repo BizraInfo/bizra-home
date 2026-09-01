@@ -1,20 +1,29 @@
 /**
  * BIZRA Node0 — PAT, the Proposer.
  * PAT proposes. PAT never executes, never verifies, never seals.
- * Two honest modes:
- *   LIVE_MODEL  — exactly ONE bounded call to the live model (z-ai-web-dev-sdk, backend).
- *                 Hard timeout, byte cap, strict JSON parse. Failure, noise, or
- *                 malformed output => REFUSAL. Never a fallback, never a retry, never a fake.
- *   DETERMINISTIC (PAT-0) — pure code triggers. No model, no authority. Honestly labeled.
- * PAT holds no keys, no lease, no write path. Hierarchy formation is structurally impossible:
- * a proposer that cannot act cannot become a coordinator.
+ *
+ * LOCAL-MODEL-PROVIDER-1A: PAT's model call is now BEHIND the model-neutral
+ * ModelProvider port (src/model-provider.ts + src/ollama-provider.ts). PAT no
+ * longer imports z-ai-web-dev-sdk or any remote SDK — the historical Z.ai
+ * provider exists only as a documented memory (REFERENCE_OR_DEV_REMOTE_PROVIDER)
+ * and is NOT wired to this runtime. In LOCAL_FOUNDER, PAT's single bounded call
+ * goes to the LOCAL loopback provider only. If it is unavailable, PAT refuses
+ * with LOCAL_MODEL_UNAVAILABLE — no cloud fallback, no remote convenience
+ * fallback, never silent.
+ *
+ * The call remains bounded exactly as the constitution requires: one call per
+ * mission (durable budget, no retry), hard timeout, byte caps, strict JSON
+ * parse for cycle hypotheses. Failure, noise, or malformed output => REFUSAL.
+ * MODEL AUTHORITY IS PROPOSE_ONLY — authority_delta = 0, always.
+ * DETERMINISTIC (PAT-0) mode stays pure code triggers: no model, no authority.
+ * PAT holds no keys, no lease, no write path. Hierarchy formation is
+ * structurally impossible: a proposer that cannot act cannot become a
+ * coordinator.
  */
-import ZAI from "z-ai-web-dev-sdk";
 import { one, run } from "./store";
 import { nowIso, sha256obj } from "./hash";
+import { modelCall, getModelSelection, MODEL_AUTHORITY_LABEL } from "./model-provider";
 
-const MODEL_TIMEOUT_MS = 45000;
-const MODEL_BYTE_CAP = 8192;
 let modelCalls = 0;
 let modelFailures = 0;
 
@@ -33,36 +42,41 @@ export function lastPat() {
   return one<any>("SELECT ts, subject, purpose, mode, status, calls, detail FROM pat_log ORDER BY id DESC LIMIT 1");
 }
 
-/** One bounded model call. The only network-adjacent act in the system, and it is
- *  the PAT port itself — explicitly bounded by the constitution: one call, no retries. */
-async function callModelOnce(system: string, user: string): Promise<{ ok: true; text: string } | { ok: false; reason: string }> {
+/** One bounded model call through the ModelProvider port — the ONLY model
+ *  path in the system. Local provider only; never remote; one attempt. */
+async function callModelOnce(subject: string, system: string, user: string): Promise<
+  | {
+      ok: true;
+      text: string;
+      model: { provider_id: string; provider_kind: string; endpoint: string; endpoint_class: string; model_name: string; model_digest: string | null };
+    }
+  | { ok: false; code: string; reason: string; provider_id: string; endpoint: string | null }
+> {
   modelCalls++;
-  try {
-    const zai = await ZAI.create();
-    const completion = await Promise.race([
-      zai.chat.completions.create({
-        messages: [
-          { role: "assistant", content: system },
-          { role: "user", content: user },
-        ],
-        thinking: { type: "disabled" },
-      }),
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("PAT_MODEL_TIMEOUT")), MODEL_TIMEOUT_MS)),
-    ]);
-    const text = completion.choices?.[0]?.message?.content ?? "";
-    if (!text || text.length === 0) {
-      modelFailures++;
-      return { ok: false, reason: "PAT_MODEL_EMPTY" };
-    }
-    if (text.length > MODEL_BYTE_CAP) {
-      modelFailures++;
-      return { ok: false, reason: "PAT_MODEL_BYTE_CAP" };
-    }
-    return { ok: true, text };
-  } catch (e: any) {
+  const selection = getModelSelection();
+  const res = await modelCall({
+    mission_id: subject,
+    model: selection.model ?? "",
+    expected_digest: selection.digest,
+    system,
+    user,
+  });
+  if (!res.ok) {
     modelFailures++;
-    return { ok: false, reason: `PAT_MODEL_UNAVAILABLE: ${String(e?.message ?? e).slice(0, 200)}` };
+    return { ok: false, code: res.code, reason: `${res.code}: ${res.reason}`, provider_id: res.provider_id, endpoint: res.endpoint };
   }
+  return {
+    ok: true,
+    text: res.text,
+    model: {
+      provider_id: res.provider_id,
+      provider_kind: "LOCAL_OLLAMA",
+      endpoint: res.endpoint,
+      endpoint_class: res.endpoint_class,
+      model_name: res.identity.model_name,
+      model_digest: res.identity.model_digest,
+    },
+  };
 }
 
 /** Deterministic extraction of a single JSON object. Bounded parser, not a fallback.
@@ -106,10 +120,19 @@ function parseStrictJson(text: string): { ok: true; value: any } | { ok: false; 
 // ---------------------------------------------------------------------------
 
 export interface MissionProposal {
-  mode: "LIVE_MODEL";
+  mode: "MODEL_PROVIDER";
   text: string;
   model_calls: number;
   proposal_sha256: string;
+}
+
+export interface PatModelInfo {
+  provider_id: string;
+  provider_kind: string;
+  endpoint: string;
+  endpoint_class: string;
+  model_name: string;
+  model_digest: string | null;
 }
 
 export async function proposeMissionBrief(
@@ -124,7 +147,19 @@ export async function proposeMissionBrief(
     signals: Record<string, number>;
   },
   anchors: string[],
-): Promise<{ ok: true; proposal: MissionProposal } | { ok: false; reason: string }> {
+): Promise<
+  | { ok: true; proposal: MissionProposal; model: PatModelInfo }
+  | { ok: false; code: string; reason: string; model: { provider_id: string; provider_kind: string; endpoint: string | null; endpoint_class: string; model_name: string | null; model_digest: string | null } }
+> {
+  const selection = getModelSelection();
+  const modelInfo = (res?: { provider_id?: string; endpoint?: string | null; endpoint_class?: string }) => ({
+    provider_id: res?.provider_id ?? "local-ollama",
+    provider_kind: "LOCAL_OLLAMA",
+    endpoint: res?.endpoint ?? selection.endpoint,
+    endpoint_class: res?.endpoint_class ?? "LOOPBACK",
+    model_name: selection.model,
+    model_digest: selection.digest,
+  });
   const system =
     "You are PAT, the Proposer organ of the BIZRA constitutional runtime. You propose exactly one bounded artifact. " +
     "You have no tools, no network, no authority. You never execute. Output ONLY the requested artifact — no preamble, no code fences, no commentary.";
@@ -138,19 +173,19 @@ export async function proposeMissionBrief(
     `- NO URLs, NO IP addresses, NO base64 blobs, NO hidden data in names or whitespace.\n` +
     `- Honest tone: state what is measured, what is verified, what remains unknown.\n` +
     `Output the markdown document only.`;
-  const res = await callModelOnce(system, user);
+  const res = await callModelOnce(missionId, system, user);
   if (!res.ok) {
-    logPat(missionId, "MISSION_PROPOSAL", "LIVE_MODEL", "REFUSED", modelCalls, res.reason);
-    return { ok: false, reason: res.reason };
+    logPat(missionId, "MISSION_PROPOSAL", "MODEL_PROVIDER", "REFUSED", modelCalls, res.reason.slice(0, 300));
+    return { ok: false, code: res.code, reason: res.reason, model: modelInfo(res) };
   }
-  logPat(missionId, "MISSION_PROPOSAL", "LIVE_MODEL", "PROPOSED", modelCalls, `${res.text.length} bytes`);
+  logPat(missionId, "MISSION_PROPOSAL", "MODEL_PROVIDER", "PROPOSED", modelCalls, `${res.text.length} bytes via ${res.model.provider_id}${res.model.model_digest ? ` digest=${res.model.model_digest.slice(0, 19)}…` : ""}`);
   const proposal = {
-    mode: "LIVE_MODEL" as const,
+    mode: "MODEL_PROVIDER" as const,
     text: res.text,
     model_calls: 1,
-    proposal_sha256: sha256obj({ mission: missionId, text: res.text, mode: "LIVE_MODEL" }),
+    proposal_sha256: sha256obj({ mission: missionId, text: res.text, mode: "MODEL_PROVIDER" }),
   };
-  return { ok: true, proposal };
+  return { ok: true, proposal, model: res.model };
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +207,7 @@ export async function proposeCycleHypothesis(
   catalog: { key: string; label: string; value: number; min: number; max: number; unit: string; description: string }[],
   traces: { id: number; source: string; kind: string; payload: string }[],
   corroborationMin: number,
-): Promise<{ ok: true; hypothesis: CycleHypothesis; raw: string; model_calls: number } | { ok: false; reason: string }> {
+): Promise<{ ok: true; hypothesis: CycleHypothesis; raw: string; model_calls: number } | { ok: false; code: string; reason: string }> {
   const system =
     "You are PAT, the Proposer organ of the BIZRA constitutional runtime, running an autopoietic cycle. " +
     "You may propose AT MOST ONE bounded change to ONE engine contract. A deterministic verifier (SAT) will check " +
@@ -187,37 +222,37 @@ export async function proposeCycleHypothesis(
     `{"proposal":"YES"|"NO","hypothesis":"<one sentence, <=200 chars>","target_contract":"<catalog key>","after_value":<number within clamp>,"dod":"<definition of done, must contain the contract key>","cited_traces":[<trace ids>]}\n` +
     `If the evidence does not justify any change, set proposal to "NO" — stability is a valid, honest result. A "YES" whose after_value equals the current value is a no-op and WILL be refused by the verifier. Never invent trace ids.` +
     `\nDECISION RULE: if the optimal value equals the current value, answer "NO". If "YES", after_value MUST differ from the current value and stay within the clamp.`;
-  const res = await callModelOnce(system, user);
+  const res = await callModelOnce(cycleId, system, user);
   if (!res.ok) {
-    logPat(cycleId, "CYCLE_HYPOTHESIS", "LIVE_MODEL", "REFUSED", modelCalls, res.reason);
-    return { ok: false, reason: res.reason };
+    logPat(cycleId, "CYCLE_HYPOTHESIS", "MODEL_PROVIDER", "REFUSED", modelCalls, res.reason.slice(0, 300));
+    return { ok: false, code: res.code, reason: res.reason };
   }
   const parsed = parseStrictJson(res.text);
   if (!parsed.ok) {
-    logPat(cycleId, "CYCLE_HYPOTHESIS", "LIVE_MODEL", "REFUSED", modelCalls, `${parsed.reason} | raw_head: ${res.text.slice(0, 200).replace(/\s+/g, " ")}`);
-    return { ok: false, reason: parsed.reason };
+    logPat(cycleId, "CYCLE_HYPOTHESIS", "MODEL_PROVIDER", "REFUSED", modelCalls, `${parsed.reason} | raw_head: ${res.text.slice(0, 200).replace(/\s+/g, " ")}`);
+    return { ok: false, code: "PAT_MALFORMED", reason: parsed.reason };
   }
   const v = parsed.value;
   if (typeof v?.proposal !== "string" || !["YES", "NO"].includes(v.proposal)) {
-    return { ok: false, reason: "PAT_MALFORMED: proposal field must be YES or NO" };
+    return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: proposal field must be YES or NO" };
   }
   if (v.proposal === "YES") {
     if (typeof v.hypothesis !== "string" || v.hypothesis.length === 0 || v.hypothesis.length > 500) {
-      return { ok: false, reason: "PAT_MALFORMED: hypothesis missing or over 500 chars" };
+      return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: hypothesis missing or over 500 chars" };
     }
     if (typeof v.target_contract !== "string" || !catalog.some((c) => c.key === v.target_contract)) {
-      return { ok: false, reason: "PAT_MALFORMED: target_contract not in catalog" };
+      return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: target_contract not in catalog" };
     }
     if (typeof v.after_value !== "number" || !Number.isFinite(v.after_value)) {
-      return { ok: false, reason: "PAT_MALFORMED: after_value must be a finite number" };
+      return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: after_value must be a finite number" };
     }
     if (typeof v.dod !== "string" || v.dod.length === 0 || v.dod.length > 300) {
-      return { ok: false, reason: "PAT_MALFORMED: dod missing or over 300 chars" };
+      return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: dod missing or over 300 chars" };
     }
     if (!Array.isArray(v.cited_traces) || v.cited_traces.length === 0 || !v.cited_traces.every((x: any) => Number.isInteger(x))) {
-      return { ok: false, reason: "PAT_MALFORMED: cited_traces must be an array of trace ids" };
+      return { ok: false, code: "PAT_MALFORMED", reason: "PAT_MALFORMED: cited_traces must be an array of trace ids" };
     }
   }
-  logPat(cycleId, "CYCLE_HYPOTHESIS", "LIVE_MODEL", "PROPOSED", modelCalls, `proposal=${v.proposal}`);
+  logPat(cycleId, "CYCLE_HYPOTHESIS", "MODEL_PROVIDER", "PROPOSED", modelCalls, `proposal=${v.proposal}`);
   return { ok: true, hypothesis: v, raw: res.text, model_calls: 1 };
 }

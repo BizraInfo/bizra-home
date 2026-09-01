@@ -41,6 +41,17 @@ import { verifyActionEnvelope, ENVELOPE_SCHEMA } from "./envelope";
 import { resolvePrincipal, knownPrincipalIds, PrincipalRecord } from "./principal-registry";
 import { resolveMode } from "./mode";
 import { readOutboxFile } from "./executor";
+import { standaloneProposal } from "./mission";
+import {
+  modelStateProjection,
+  observeLocalModel,
+  cacheModelObservation,
+  getModelSelection,
+  modelCallLog,
+  MODEL_AUTHORITY_LABEL,
+  MAX_MODEL_CALLS_PER_MISSION,
+} from "./model-provider";
+import { classifyEndpoint, saveModelConfigAtomic, newModelConfig, MODEL_CONFIG_SCHEMA, PROVIDER_ID_LOCAL_OLLAMA } from "./model-config";
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -316,8 +327,11 @@ export function start() {
         // Health never depends on the loop being live — an honest liveness probe.
         // 1B truth projection: PUBLIC_REFERENCE reports REFERENCE_ONLINE (a
         // read-only archive presentation), never LIVE.
+        // 1A-model law: PUBLIC reports the model statically (NOT_CONNECTED_REFERENCE_MODE)
+        // and never probes; LOCAL replays the cached observation (never probes here).
         if (path === "/api/health") {
           const t = truthProjection();
+          const modelProjection = modelStateProjection();
           return json({
             ok: true,
             status: haltedReason ? "HALTED" : t.status,
@@ -325,6 +339,7 @@ export function start() {
             mode: RUNTIME_MODE,
             node0_active: t.node0_active,
             actions_enabled: t.actions_enabled,
+            model_status: modelProjection.model_status,
             bind_host: RES.bindHost,
             port: RES.port,
             uptime_ms: Date.now() - startedAt,
@@ -371,9 +386,29 @@ export function start() {
 
         if (path === "/api/contracts") return json({ ok: true, contracts: contractsSnapshot() });
 
+        // ---- Model provider surface (LOCAL-MODEL-PROVIDER-1A) ----------------
+        // GET /api/model — the observation route. PUBLIC_REFERENCE answers
+        // STATICALLY (§6: never a probe, never an enumeration, never an
+        // invocation). LOCAL_FOUNDER performs the honest health/list-model
+        // observation — the ONLY thing that may set READY (§15).
+        if (path === "/api/model" && req.method === "GET") {
+          if (RUNTIME_MODE === "PUBLIC_REFERENCE") {
+            return json({ ok: true, mode: RUNTIME_MODE, ...modelStateProjection() });
+          }
+          const obs = await observeLocalModel();
+          cacheModelObservation(obs);
+          return json({
+            ok: true,
+            mode: RUNTIME_MODE,
+            ...obs,
+            call_budget: { max_model_calls_per_mission: MAX_MODEL_CALLS_PER_MISSION },
+            recent_calls: modelCallLog(6),
+          });
+        }
+
         // ---- Consequential actions below: HALTED refuses all -------------------
         if (haltedReason) {
-          if (path === "/api/mission" || path === "/api/cycle" || path === "/api/trace" || path.startsWith("/api/transition/")) {
+          if (path === "/api/mission" || path === "/api/cycle" || path === "/api/trace" || path.startsWith("/api/transition/") || path === "/api/model/config" || path === "/api/pat/proposal") {
             return halted();
           }
         }
@@ -388,6 +423,61 @@ export function start() {
         }
 
         // ---- Envelope-gated consequential actions (LOCAL_FOUNDER only) --------
+
+        // POST /api/model/config — the ONLY legal model configuration mutation
+        // path (§7): a v1.1 local action envelope, a server-resolved principal,
+        // a fresh nonce. The caller's identity strings are ignored as authority.
+        if (path === "/api/model/config" && req.method === "POST") {
+          if (RUNTIME_MODE !== "LOCAL_FOUNDER") return publicReadOnlyRefusal("POST /api/model/config");
+          const gate = await requireEnvelope(req, "MODEL_CONFIG_SET");
+          if (!gate.ok) return gate.response;
+          const action = (gate.action ?? {}) as Record<string, unknown>;
+
+          const providerId = typeof action.provider_id === "string" ? action.provider_id : PROVIDER_ID_LOCAL_OLLAMA;
+          if (providerId !== PROVIDER_ID_LOCAL_OLLAMA) {
+            return json({ ok: false, refused: true, code: "MODEL_PROVIDER_UNKNOWN", reason: `MODEL_PROVIDER_UNKNOWN: only '${PROVIDER_ID_LOCAL_OLLAMA}' exists in this slice — '${String(providerId).slice(0, 40)}' is refused; there is no remote provider and no silent substitution`, envelope_schema: ENVELOPE_SCHEMA }, 403);
+          }
+
+          const endpoint = typeof action.endpoint === "string" ? action.endpoint : "";
+          const cls = classifyEndpoint(endpoint);
+          if (!cls.ok) {
+            return json({ ok: false, refused: true, code: "MODEL_ENDPOINT_NONLOCAL", reason: cls.refused, authority: MODEL_AUTHORITY_LABEL, envelope_schema: ENVELOPE_SCHEMA }, 403);
+          }
+
+          const selectedModel = typeof action.selected_model === "string" && action.selected_model.trim().length > 0 ? action.selected_model.trim() : null;
+          const selectedDigest = typeof action.selected_model_digest === "string" && action.selected_model_digest.trim().length > 0 ? action.selected_model_digest.trim() : null;
+
+          const cfg = newModelConfig({
+            endpoint: cls.endpoint,
+            selected_model: selectedModel,
+            selected_model_digest: selectedDigest,
+            // SERVER-RESOLVED principal — the caller's string never lands here (MP-08)
+            updated_by_principal: gate.principal.local_control_principal_id,
+          });
+          saveModelConfigAtomic(STATE_ROOT, cfg);
+
+          return json({
+            ok: true,
+            config: cfg,
+            ignored_caller_fields: {
+              updated_by_principal: typeof action.updated_by_principal === "string" ? action.updated_by_principal : null,
+              actor_id: gate.envelope.actor_id ?? null,
+            },
+            note: "the authoritative updated_by_principal is resolved server-side from the key registry — caller identity strings are descriptive metadata only",
+            authority: MODEL_AUTHORITY_LABEL,
+          });
+        }
+
+        // POST /api/pat/proposal — the ONE bounded PAT proposal path (§9).
+        // PROPOSAL ONLY: no SAT verdict, no FATE lease, no write, no receipt.
+        if (path === "/api/pat/proposal" && req.method === "POST") {
+          if (RUNTIME_MODE !== "LOCAL_FOUNDER") return publicReadOnlyRefusal("POST /api/pat/proposal");
+          const gate = await requireEnvelope(req, "PAT_PROPOSE");
+          if (!gate.ok) return gate.response;
+          const result = await standaloneProposal();
+          return json(result.body, result.status);
+        }
+
         if (path === "/api/trace" && req.method === "POST") {
           if (RUNTIME_MODE !== "LOCAL_FOUNDER") return publicReadOnlyRefusal("POST /api/trace");
           const gate = await requireEnvelope(req, "TRACE_INGEST");

@@ -98,3 +98,74 @@ export function runtimeDotTone(kind: RuntimeKind): "verdant" | "solar" | "ember"
       return "solar";
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* LOCAL-MODEL-PROVIDER-1A — the truthful local-model projection.      */
+/*                                                                     */
+/* The law encoded here (mission §15):                                 */
+/*   1. PUBLIC_REFERENCE always shows "REFERENCE — NOT CONNECTED" —    */
+/*      the reference site never probes and never claims a model.      */
+/*   2. LOCAL_FOUNDER with an unavailable Ollama shows                 */
+/*      "NOT DETECTED".                                                */
+/*   3. "READY" is displayed ONLY from a server-verified successful    */
+/*      provider health/list-model observation (model_status ===       */
+/*      "READY" from the runtime) — never from configuration alone,    */
+/*      and never rendered client-side from config strings.            */
+/* ------------------------------------------------------------------ */
+
+export type ModelProjection =
+  | "REFERENCE_NOT_CONNECTED"
+  | "NOT_DETECTED"
+  | "UNCONFIGURED"
+  | "READY"
+  | "DEGRADED"
+  | "SILENT";
+
+export interface ModelLike {
+  model_status?: string;
+  observed?: { model_name?: string; model_digest?: string | null } | null;
+}
+
+/** Classify the runtime's model block. Absent data is SILENT (render nothing). */
+export function classifyModel(model: ModelLike | null | undefined): ModelProjection {
+  if (!model || typeof model.model_status !== "string" || model.model_status.length === 0) return "SILENT";
+  switch (model.model_status) {
+    case "NOT_CONNECTED_REFERENCE_MODE":
+      return "REFERENCE_NOT_CONNECTED";
+    case "NOT_DETECTED":
+      return "NOT_DETECTED";
+    case "UNCONFIGURED":
+      return "UNCONFIGURED";
+    case "READY":
+      // READY arrives only from the runtime's verified observation route —
+      // a READY without an observed model is refused here (defense in depth:
+      // READY can never be rendered from configuration alone).
+      return model.observed?.model_name ? "READY" : "NOT_DETECTED";
+    case "DEGRADED":
+      return "DEGRADED";
+    default:
+      return "NOT_DETECTED";
+  }
+}
+
+/** The hero status-line label for the local model projection. */
+export function modelLabel(kind: ModelProjection, model: ModelLike | null | undefined): string | null {
+  switch (kind) {
+    case "REFERENCE_NOT_CONNECTED":
+      return "REFERENCE — NOT CONNECTED";
+    case "NOT_DETECTED":
+      return "NOT DETECTED";
+    case "UNCONFIGURED":
+      return "NOT CONFIGURED";
+    case "DEGRADED":
+      return "DEGRADED — CONFIG/REALITY MISMATCH";
+    case "READY": {
+      const name = model?.observed?.model_name ?? "";
+      const digest = model?.observed?.model_digest;
+      const prefix = typeof digest === "string" && digest.length > 0 ? digest.slice(0, 12) : null;
+      return prefix ? `READY · ${name} · ${prefix}…` : `READY · ${name}`;
+    }
+    default:
+      return null; // SILENT — render nothing
+  }
+}

@@ -22,6 +22,12 @@ declare const Bun: {
     stop(force?: boolean): void;
     [key: string]: unknown;
   };
+  listen(options: {
+    port?: number;
+    hostname?: string;
+    socket: { open?(...args: unknown[]): void; data?(...args: unknown[]): void; [key: string]: unknown };
+    [key: string]: unknown;
+  }): { stop(force?: boolean): void; [key: string]: unknown };
 };
 
 declare module "bun:sqlite" {
@@ -40,7 +46,7 @@ declare module "bun:sqlite" {
 declare module "bun:test" {
   export function describe(name: string, fn: () => void): void;
   export function test(name: string, fn: () => void | Promise<void>, timeoutOrOpts?: number | { timeout?: number }): void;
-  export function beforeAll(fn: () => void | Promise<void>): void;
+  export function beforeAll(fn: () => void | Promise<void>, timeoutOrOpts?: number | { timeout?: number }): void;
   export function afterAll(fn: () => void | Promise<void>): void;
   export function afterEach(fn: () => void | Promise<void>): void;
   export const expect: any;
