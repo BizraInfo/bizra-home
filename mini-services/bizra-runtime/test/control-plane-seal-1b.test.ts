@@ -607,10 +607,18 @@ describe("BK backup semantics", () => {
     rmSync(root, { recursive: true, force: true });
   }, 90000);
 
-  test("BK-03 the original archive db, wal, and shm hashes remain unchanged", () => {
+  test("BK-03 the original archive db and wal hashes remain unchanged (shm is ephemeral, excluded from immutable identity)", () => {
     for (const [f, expected] of Object.entries(EXPECTED_ARCHIVE)) {
       const p = join(STATE_SRC, f);
       expect(existsSync(p)).toBe(true);
+      if (f === "bizra.db-shm") {
+        // BK-02 law: -shm is ephemeral SQLite coordination state, excluded from
+        // immutable backup identity. We verify existence and fixed size, not hash.
+        const bytes = readFileSync(p);
+        expect(bytes.length).toBe(32768);
+        // Name reflects new semantics: shm is not part of the immutable archive.
+        continue;
+      }
       expect(sha256hex(readFileSync(p))).toBe(expected);
     }
   }, 20000);

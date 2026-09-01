@@ -66,6 +66,16 @@ export const TEST_QWEN = "test-qwen:latest";
 export const TEST_GEMMA_DIGEST = syntheticDigest("test-gemma");
 export const TEST_QWEN_DIGEST = syntheticDigest("test-qwen");
 
+/** Allocate a free loopback port by binding to 0, reading the assigned port, then closing.
+ * This is the only honest way to claim "nothing listening" — we control allocation. */
+export async function getFreePort(): Promise<number> {
+  const tmp = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { open() {}, data() {} } });
+  const port = (tmp as any).port;
+  tmp.stop();
+  await new Promise((r) => setTimeout(r, 10));
+  return port;
+}
+
 /** A well-formed deterministic morning-brief fixture (SAT-shaped, but inert). */
 export function validBriefFixture(mission: string, date: string): string {
   return (
@@ -176,7 +186,11 @@ export function startMockOllama(opts: {
   });
 }
 
-/** A raw loopback TCP connection counter — used to prove PUBLIC mode never touches a port. */
+/** A raw loopback TCP connection counter — used to prove PUBLIC mode never touches a port.
+ * The port must be a free port obtained via getFreePort() — never assume a
+ * well-known port like 11434 is free when real Ollama occupies it. If the
+ * port is unexpectedly occupied, we fail closed with a clear error rather than
+ * inventing a zero. */
 export function loopbackProbeCounter(port: number): { count: number; stop(): void } {
   const state = { count: 0 };
   const listener = Bun.listen({

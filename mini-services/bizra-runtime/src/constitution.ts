@@ -1,12 +1,18 @@
 /**
  * BIZRA Node0 — the Constitution Vault.
  * The three root files (themassage.pdf, bizra.pdf, BIZRA_Third_Fact_v0_1_FINAL.pdf)
- * are the immutable root of the system — unchangeable, even by their author.
+ * are the hash-sealed root of the system — byte drift halts the engine.
  * Sealed once at commission; re-verified on every boot and on every /api/verify.
  * Any byte drift => the engine HALTS. Nothing proceeds over a broken constitution.
+ * Physical permission immutability is not claimed; what is proven is hash-seal + drift detection.
+ *
+ * Portability law (artifact identity != location):
+ *   historical absolute path in DB = provenance only
+ *   current logical slot = server-owned STATE_ROOT + fixed VAULT_DIR + expected name
+ *   + regular-file / no-symlink / containment checks + sealed byte hash = identity
  */
-import { readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, statSync, lstatSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { all, one, run } from "./store";
 import { VAULT_DIR } from "./store";
 import { sha256hex, sha256obj, nowIso } from "./hash";
@@ -63,7 +69,7 @@ export function sealConstitution(): { root: string; files: RootFile[] } {
   const receipt = appendReceipt("CONSTITUTION_SEALED", "NODE0-ROOT", {
     root_hash: root,
     files: files.map((f) => ({ name: f.name, sha256: f.sha256, bytes: f.bytes })),
-    law: "unchangeable even by its author — drift halts the engine",
+    law: "hash-sealed — byte drift halts the engine; physical permission immutability not claimed",
   });
   relay("DONE", "CONSTITUTION_SEALED", "3 root files sealed", receipt.digest);
   return { root, files };
@@ -76,14 +82,46 @@ export interface ConstitutionVerification {
   drift: string[];
 }
 
-/** Re-read the vault bytes and compare. Drift is fatal. */
+/** Re-read the vault bytes and compare. Drift is fatal.
+ * Logical-slot verification: historical r.path is provenance only.
+ * Current slot = VAULT_DIR + r.name, with containment + symlink + regular-file checks.
+ * This makes the sealed DB portable across relocations and temp roots:
+ *   historical absolute path = provenance
+ *   current logical slot      = location
+ *   content hash              = identity
+ */
 export function verifyConstitution(): ConstitutionVerification {
   const rows = all<RootFile>("SELECT name, role, path, bytes, sha256, sealed_at FROM constitution ORDER BY id ASC");
   const drift: string[] = [];
+  const vaultResolved = resolve(VAULT_DIR);
   const files = rows.map((r) => {
     let verified = false;
+    // Fixed logical slot for this artifact
+    const currentPath = join(VAULT_DIR, r.name);
+    const currentResolved = resolve(currentPath);
+    // Containment: must stay inside the vault (no traversal/escape)
+    if (!currentResolved.startsWith(vaultResolved + "/") && currentResolved !== vaultResolved) {
+      drift.push(`${r.name} (slot escape)`);
+      return { name: r.name, role: r.role, bytes: r.bytes, sha256: r.sha256, verified: false };
+    }
+    // No symlink, must be regular file
     try {
-      const actual = sha256hex(readFileSync(r.path));
+      const lst = lstatSync(currentPath);
+      if (lst.isSymbolicLink()) {
+        drift.push(`${r.name} (symlink refused)`);
+        return { name: r.name, role: r.role, bytes: r.bytes, sha256: r.sha256, verified: false };
+      }
+      const st = statSync(currentPath);
+      if (!st.isFile()) {
+        drift.push(`${r.name} (not a regular file)`);
+        return { name: r.name, role: r.role, bytes: r.bytes, sha256: r.sha256, verified: false };
+      }
+    } catch {
+      drift.push(`${r.name} (unreadable)`);
+      return { name: r.name, role: r.role, bytes: r.bytes, sha256: r.sha256, verified: false };
+    }
+    try {
+      const actual = sha256hex(readFileSync(currentPath));
       verified = actual === r.sha256;
       if (!verified) drift.push(r.name);
     } catch {

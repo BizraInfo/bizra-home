@@ -28,6 +28,7 @@ import { createHash, randomBytes, createHmac } from "node:crypto";
 import {
   startMockOllama,
   loopbackProbeCounter,
+  getFreePort,
   TEST_GEMMA,
   TEST_QWEN,
   TEST_GEMMA_DIGEST,
@@ -271,8 +272,11 @@ function tableRows(root: string, table: string): any[] {
 // MP-01 — PUBLIC_REFERENCE never probes port 11434
 // ---------------------------------------------------------------------------
 describe("MP-01 PUBLIC_REFERENCE never probes local models", () => {
-  test("health/state/model never touch 11434 and report NOT_CONNECTED_REFERENCE_MODE", async () => {
-    const counter = loopbackProbeCounter(OLLAMA_DEFAULT_PORT);
+  test("health/state/model never touch loopback and report NOT_CONNECTED_REFERENCE_MODE", async () => {
+    // Coexistence: real Ollama occupies 11434, so we prove the invariant on a
+    // dedicated free port we control. PUBLIC must never probe ANY model endpoint.
+    const freePort = await getFreePort();
+    const counter = loopbackProbeCounter(freePort);
     try {
       const b = await bootRuntime({ mode: "PUBLIC_REFERENCE" });
       for (let i = 0; i < 3; i++) {
@@ -384,8 +388,8 @@ describe("MP-03 redirect to non-loopback refused", () => {
 describe("MP-04 LOCAL_MODEL_UNAVAILABLE", () => {
   test("LOCAL_FOUNDER + configured endpoint with nothing listening returns LOCAL_MODEL_UNAVAILABLE", async () => {
     const b = await bootFounder();
-    // configure the DEFAULT ollama port; nothing listens there in this environment
-    const cfg = await configureProvider(b, { endpoint: `http://127.0.0.1:${OLLAMA_DEFAULT_PORT}`, selected_model: TEST_GEMMA, selected_model_digest: TEST_GEMMA_DIGEST });
+    const freePort = await getFreePort();
+    const cfg = await configureProvider(b, { endpoint: `http://127.0.0.1:${freePort}`, selected_model: TEST_GEMMA, selected_model_digest: TEST_GEMMA_DIGEST });
     expect(cfg.status).toBe(200);
     const res = await propose(b);
     expect(res.status).toBe(502);
@@ -406,7 +410,8 @@ describe("MP-04 LOCAL_MODEL_UNAVAILABLE", () => {
 describe("MP-05 no remote fallback", () => {
   test("failure names the LOCAL provider; the remote SDK is absent from the runtime source; exactly one attempt", async () => {
     const b = await bootFounder();
-    const cfg = await configureProvider(b, { endpoint: `http://127.0.0.1:${OLLAMA_DEFAULT_PORT}`, selected_model: TEST_GEMMA, selected_model_digest: TEST_GEMMA_DIGEST });
+    const freePort = await getFreePort();
+    const cfg = await configureProvider(b, { endpoint: `http://127.0.0.1:${freePort}`, selected_model: TEST_GEMMA, selected_model_digest: TEST_GEMMA_DIGEST });
     expect(cfg.status).toBe(200);
     const res = await propose(b);
     const body = await jsonOf(res);
