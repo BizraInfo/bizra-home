@@ -332,11 +332,8 @@ export async function modelCall(input: GenerateInput): Promise<ModelGenerateOk |
     return { ok: false, code: "MODEL_REQUEST_TOO_LARGE", reason, provider_id: provider.id, endpoint_class: provider.endpointClass, endpoint: provider.endpoint, mission_id: missionId, authority: MODEL_AUTHORITY_LABEL };
   }
 
-  // 3. Pre-dispatch timing — residency is observed via the provider's own listModels check inside generate,
-  //    but we mark the dispatch moment here for the lifecycle.
+  // 3. Pre-dispatch timing. Model listing verifies identity, not residency.
   recordTiming(missionId, "GENERATE_DISPATCHED", `endpoint=${provider.endpoint} model=${input.model}`);
-  // For non-streaming mock, residency is immediate — we emit it as observed at dispatch+1ms for ordering.
-  recordTiming(missionId, "RESIDENCY_FIRST_OBSERVED", `model=${input.model}`);
 
   const startedAt = new Date();
   const result = await provider.generate(input);

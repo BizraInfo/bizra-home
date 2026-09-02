@@ -167,6 +167,7 @@ describe("OBS-01 success lifecycle observability", () => {
       expect(events).toContain("REQUEST");
       expect(events).toContain("BUDGET_ADMITTED");
       expect(events).toContain("GENERATE_DISPATCHED");
+      expect(events).not.toContain("RESIDENCY_FIRST_OBSERVED");
       expect(events).toContain("FIRST_TRANSPORT_BYTES");
       expect(events).toContain("FIRST_VALID_STREAM_OBJECT");
       expect(events).toContain("GENERATION_COMPLETE");
