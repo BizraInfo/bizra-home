@@ -9,11 +9,15 @@ import { Reveal } from "./shared";
 import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
-export function Origin({ state }: { state: Node0State | null }) {
-  const reference = classifyRuntime(state?.runtime, state != null) === "REFERENCE";
+export function Origin({ state, error }: { state: Node0State | null; error: string | null }) {
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const reference = kind === "REFERENCE";
+  const live = kind === "LIVE";
   const node0Card = reference
     ? { value: "Node0", label: "reference · receipt-backed", note: "sealed archive, measured — not an active node" }
-    : { value: "Node0", label: "live · receipt-backed", note: "measured, not promised" };
+    : live
+      ? { value: "Node0", label: "live · receipt-backed", note: "measured, not promised" }
+      : { value: "Node0", label: "status unavailable", note: "no current runtime evidence" };
   const STATS: Array<{ value: string; label: string; note: string; tone: "gold" | "verdant" }> = [
     { value: "3 years", label: "every single day", note: "day and night, without exception", tone: "gold" },
     { value: "1 builder", label: "solo, sovereign", note: "one of the people, not above them", tone: "gold" },
@@ -54,9 +58,8 @@ export function Origin({ state }: { state: Node0State | null }) {
             <p className="mt-4 text-base font-light leading-[1.85] text-cream/60">
               We did not start from a startup or a lab. We started from the pain — the
               pain the whole world feels and mostly cannot name. Three years of solo work,
-              day and night, turned that pain into a running sovereign node: an AI
-              companion, a private agent team, a consent gate, and a receipt for every
-              action.
+              day and night, produced a local sovereign-node implementation: an AI
+              companion, a private agent team, consent gates, and receipt pathways.
             </p>
           </Reveal>
         </div>

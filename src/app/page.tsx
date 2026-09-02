@@ -37,18 +37,18 @@ export default function Home() {
 
         <main className="flex-1">
           <Hero state={data} error={error} />
-          <Origin state={data} />
+          <Origin state={data} error={error} />
           <Fracture />
-          <Loop state={data} />
+          <Loop state={data} error={error} />
           <Proof state={data} error={error} />
-          <Vision state={data} />
+          <Vision state={data} error={error} />
           <Law />
           <Ihsan />
-          <Forest />
+          <Forest state={data} error={error} />
           <Invitation />
         </main>
 
-        <Footer state={data} />
+        <Footer state={data} error={error} />
       </div>
     </div>
   );

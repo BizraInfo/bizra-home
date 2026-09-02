@@ -215,13 +215,14 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
     return () => clearInterval(id);
   }, []);
 
-  const live = state && !error && state.ok;
-  const reference = classifyRuntime(state?.runtime, live ? true : false) === "REFERENCE";
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const live = kind === "LIVE";
+  const reference = kind === "REFERENCE";
 
   return (
     <section
       id="proof"
-      aria-label="The Living Proof — real numbers, measured now"
+      aria-label="The Living Proof — runtime evidence and measured records"
       className="relative w-full border-t border-white/5 bg-navy-900 px-6 py-24 sm:px-8 sm:py-32"
     >
       {/* faint dawn behind the proof */}
@@ -244,9 +245,11 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
           </Reveal>
           <Reveal delay={0.16}>
             <p className="mx-auto mt-5 max-w-2xl text-base font-light leading-relaxed text-cream/55">
-              Every number on this page is read live from the Node0 runtime, refreshed
-              every 2.5 seconds. If the engine goes silent, this page says so — no
-              hardcoded victories, no painted green.
+              {reference
+                ? "The numbers below come from the sealed Node0 reference archive, not an active node. No hardcoded victories, no painted green."
+                : live
+                  ? "Every number on this page is read live from the Node0 runtime, refreshed every 2.5 seconds. If the engine goes silent, this page says so — no hardcoded victories, no painted green."
+                  : "Current runtime evidence is unavailable. No runtime numbers are presented until an observed state exists — no hardcoded victories, no painted green."}
             </p>
           </Reveal>
         </div>
@@ -259,13 +262,13 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
             >
               <p className="inline-flex items-center gap-2.5 font-mono text-[0.72rem] tracking-[0.2em] text-solar uppercase">
                 <LiveDot tone="solar" />
-                {state ? "Runtime signal lost — the last verified state stands" : "Reading the runtime — first heartbeat arriving"}
+                {error ? "Runtime signal lost — the last verified state stands" : "Reading the runtime — first heartbeat arriving"}
               </p>
               <p className="mt-4 text-sm font-light leading-relaxed text-cream/50">
-                The constitutional engine on port 7421 did not answer the last poll.
-                 Nothing below is invented while it is silent — the page keeps listening
-                 and will speak again the moment the engine does.{" "}
-                 {state ? "The measurements shown while unreachable are the last sealed truth." : ""}
+                {error
+                  ? "The constitutional engine on port 7421 did not answer the last poll. Nothing below is invented while it is silent — the page keeps listening and will speak again the moment the engine does."
+                  : "No runtime snapshot has been observed yet. Nothing below is invented while the first read is pending."}{" "}
+                {state ? "The measurements shown while unreachable are the last observed snapshot." : ""}
               </p>
             </div>
           </Reveal>

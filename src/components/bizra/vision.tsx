@@ -148,10 +148,12 @@ function PoolMark() {
   );
 }
 
-export function Vision({ state }: { state: Node0State | null }) {
-  const live = state && state.ok;
-  const reference = classifyRuntime(state?.runtime, live ? true : false) === "REFERENCE";
-  const organPrefix = reference ? "measured organ (reference)" : "live organ";
+export function Vision({ state, error }: { state: Node0State | null; error: string | null }) {
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const live = kind === "LIVE";
+  const reference = kind === "REFERENCE";
+  const observedState = live || reference ? state : null;
+  const organPrefix = reference ? "measured organ (reference)" : live ? "live organ" : "runtime organ unavailable";
   const chainLen = state?.chain.len;
 
   return (
@@ -185,8 +187,12 @@ export function Vision({ state }: { state: Node0State | null }) {
           </Reveal>
           <Reveal delay={0.16}>
             <p className="mx-auto mt-5 max-w-2xl text-base font-light leading-relaxed text-cream/55">
-              Everything above is measured on one machine, today. The design is
-              larger: a shared digital space where every human is a node —
+              {reference
+                ? "The measurements above come from one sealed reference archive; they do not establish an active node."
+                : live
+                  ? "Everything above is measured on one machine, today."
+                  : "Current runtime measurements are unavailable, so no active-node claim is made."}{" "}
+              The design is larger: a shared digital space where every human is a node —
               sharing power, data, and ideas into one universal pool — where
               reward is minted only from verified impact. What is live is
               labeled live. What is vision is labeled vision. Nothing here is
@@ -227,7 +233,7 @@ export function Vision({ state }: { state: Node0State | null }) {
                   >
                     <span className="whitespace-nowrap">▸ {organPrefix}</span>
                     <span aria-hidden="true"> · </span>
-                    {p.live(state)}
+                    {p.live(observedState)}
                   </p>
                   <p className="mt-1.5 font-mono text-[0.6rem] tracking-[0.14em] text-cream/35 uppercase">
                     {p.sealed} · declared 3 years of study

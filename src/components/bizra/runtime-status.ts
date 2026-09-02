@@ -39,10 +39,10 @@ export interface RuntimeLike {
  *                  an explicit false is required to classify as LOST)
  */
 export function classifyRuntime(runtime: RuntimeLike | null | undefined, reachable = true): RuntimeKind {
+  if (!reachable) return "LOST";
   if (!runtime) return "READING";
   const halted = runtime.halted_reason != null || runtime.status === "HALTED";
   if (halted) return "HALTED";
-  if (!reachable) return "LOST";
   // THE law: only LOCAL_FOUNDER + server-verified node0_active may say LIVE.
   // Mode is authoritative — a tampered status string cannot upgrade reference mode.
   if (runtime.mode === "LOCAL_FOUNDER" && runtime.status === "LIVE" && runtime.node0_active === true) {

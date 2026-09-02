@@ -16,7 +16,7 @@ import type { Node0State } from "@/components/node0/types";
 
 export function Hero({ state, error }: { state: Node0State | null; error: string | null }) {
   const reachable = state != null && !error;
-  const kind = classifyRuntime(state?.runtime, reachable);
+  const kind = classifyRuntime(state?.runtime, error == null);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
   const dotTone = runtimeDotTone(kind);
@@ -140,7 +140,7 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
         ) : (
           <span className="inline-flex items-center gap-2.5 text-solar">
             <LiveDot tone="solar" />
-            {state ? "RUNTIME SIGNAL LOST — RETRYING, NOTHING INVENTED" : "READING THE RUNTIME — NOTHING INVENTED"}
+            {runtimeLabel(kind)}
           </span>
         )}
       </div>

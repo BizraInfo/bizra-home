@@ -530,6 +530,23 @@ describe("TL truthful status projection", () => {
     expect(offenders).toEqual([]);
   }, 20000);
 
+  test("TL-02b public Home emits no live-runtime claim before runtime evidence exists", async () => {
+    const React = await import("react");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    // @ts-ignore -- the runtime tsconfig intentionally excludes JSX; Bun executes this app-level contract.
+    const Home = (await import("../../../src/app/page")).default;
+    const html = renderToStaticMarkup(React.createElement(Home));
+
+    expect(html).not.toContain("Node0 — live today");
+    expect(html).not.toContain("live · receipt-backed");
+    expect(html).not.toContain("every number is read live");
+    expect(html).not.toContain("it is running now");
+    expect(html).not.toContain("live organ");
+    expect(html).not.toContain("did not answer the last poll");
+    expect(html).toMatch(/runtime (status|signal) (is )?(unavailable|not yet observed)/i);
+    expect(html).toContain("No runtime snapshot has been observed yet");
+  }, 20000);
+
   test("TL-03 only LOCAL_FOUNDER + bound + commissioned (node0_active=true) displays NODE0 LIVE", async () => {
     const mod: any = await import("../../../src/components/bizra/runtime-status").catch(() => null);
     expect(mod).not.toBeNull();

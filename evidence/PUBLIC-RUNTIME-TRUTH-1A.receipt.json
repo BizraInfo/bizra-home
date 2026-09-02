@@ -1,0 +1,88 @@
+{
+  "schema": "bizra.local_worktree_proof_receipt.v1",
+  "receipt_id": "PUBLIC-RUNTIME-TRUTH-1A",
+  "truth_status": "LOCAL_WORKTREE_CANDIDATE",
+  "generated_at": "2026-09-02T22:36:42+04:00",
+  "scope": "Public Home renders live-runtime claims only from an observed LIVE runtime classification.",
+  "authority": {
+    "authority_delta": 0,
+    "source_change": "LOCAL_REVERSIBLE_WORKTREE_ONLY",
+    "commit_created_at_receipt_generation": false,
+    "deployment_changed": false,
+    "runtime_started": false,
+    "model_invoked": false,
+    "signer_or_key_accessed": false,
+    "public_claim_status": "NOT_DEPLOYED"
+  },
+  "base": {
+    "branch": "main",
+    "head": "792d0b241cfc4988554ed1eaa532ea7e77593fa5",
+    "tree": "33d286b6eeea9dc7cc21a06a9b7ad2713ecdbff2"
+  },
+  "preserved_user_evidence": {
+    "path": "evidence/current-frontier/NODE0-CURRENT-FRONTIER.json",
+    "sha256": "1a122e4f28880692e28a31d867f327a432e3815f40748928ad9b8edf20035157",
+    "modified": false
+  },
+  "red_first": {
+    "test": "TL-02b public Home emits no live-runtime claim before runtime evidence exists",
+    "command": "bun test test/control-plane-seal-1b.test.ts --test-name-pattern TL-02b",
+    "exit": 1,
+    "observed_failure": "Server-rendered Home contained Node0 — live today before any runtime snapshot existed."
+  },
+  "acceptance": {
+    "unobserved_runtime_emits_live_claims": false,
+    "reference_runtime_emits_node0_live": false,
+    "live_requires_local_founder_live_and_node0_active": true,
+    "focused_test": "PASS",
+    "runtime_suite": "78_PASS_0_FAIL",
+    "runtime_typecheck": "PASS",
+    "root_lint": "PASS",
+    "production_build": "PASS",
+    "clean_mirror_control_suite": "24_PASS_0_FAIL",
+    "clean_mirror_runtime_typecheck": "PASS",
+    "clean_mirror_build": "PASS",
+    "root_typecheck": "RED_PREEXISTING_SOCKET_IO_EXAMPLES"
+  },
+  "changed_file_sha256": {
+    "mini-services/bizra-runtime/test/control-plane-seal-1b.test.ts": "66a7e4c5aa0fe9afc6cec1e75c5005d745d67c81b7276ab56e29b4d0c22e5a1a",
+    "src/app/page.tsx": "9f6fbd52accc9c247959b273068994962d5812c262ff9ae9178b12746af75eeb",
+    "src/components/bizra/footer.tsx": "3d1317c06b6f6dc0dcf3739eb95483982e58ba83778b7abf5a9cbe062bef3844",
+    "src/components/bizra/forest.tsx": "aeeee92b603d61846b22c8901fb3e13a9a9200b85215b326e863e2e0cea2c76c",
+    "src/components/bizra/hero.tsx": "0091cab3e627d4a53b2cdda27fba0a10c427c13dfee98ff75c09f2f42e0ce3a6",
+    "src/components/bizra/loop.tsx": "037d99f6b9c5f47e0f13ec89089f78039a76cee73facbf85c294a398f54927de",
+    "src/components/bizra/nav.tsx": "4d7d8d95ed494bd846a5c6112c523a0e36cfd65287eb8c037910f273a355c38e",
+    "src/components/bizra/origin.tsx": "be8a0846ec709334d0f26df584b50e76095d71b1d2398eebf61132b6ec153443",
+    "src/components/bizra/proof.tsx": "c236b34b186acf7e7c1341a4be7e773b87edb9f910b57ac714516474c8652afb",
+    "src/components/bizra/runtime-status.ts": "e0b9336f21cb8905b292f00b4ad30623fc34622f15a8af5f7b3444f0792c8c51",
+    "src/components/bizra/vision.tsx": "a7d171910502f249803abf8712ea00053453cf6be20e38a8b9c6e8a7e5358c2f"
+  },
+  "archive_integrity_after_tests": {
+    "mini-services/bizra-runtime/state/bizra.db": "40cf07c52bfaa52b334ef341456f970787f6dc701ffe18ad3c572cb5056dbd70",
+    "mini-services/bizra-runtime/state/bizra.db-wal": "bbd11a3539d7551606e2ae8316f05cfc8704d2599bd6b0f0639dd7a1afa3689a",
+    "mini-services/bizra-runtime/state/bizra.db-shm": "1b5d645d7fbc135969e55af2ad6abe9f24b4fd34004753bb9e56c2af8120ff2a"
+  },
+  "built_artifact": {
+    "path": ".next/server/app/index.html",
+    "sha256": "6c74d9cc4d1611129ab097e9084352ad446cfd15e71c202b7d650127acb498ea",
+    "bytes": 82601,
+    "forbidden_live_phrases_present": false
+  },
+  "public_observation": {
+    "observed_at": "2026-09-02T22:37:54+04:00",
+    "url": "https://bizrahome.space-z.ai/",
+    "home_http_status": 200,
+    "home_bytes": 82404,
+    "home_sha256": "334f9de24b5d59aa7917718d74289ff3ffb2c2607d93d1ee9afbc3ce36e1b75f",
+    "health_verify_state_http_status": 502,
+    "reason": "NODE0_UNREACHABLE",
+    "old_live_phrases_still_public": true,
+    "deployment_source_commit": "UNKNOWN"
+  },
+  "limitations": [
+    "The public deployment still returns NODE0_UNREACHABLE and was not changed.",
+    "The deployment source commit is unknown, so local-source equivalence is not claimed.",
+    "At generation this receipt was uncommitted and unsigned; its containing Git commit becomes the promotion boundary.",
+    "A green local build does not prove production deployment, Node0 activation, or useful impact."
+  ]
+}

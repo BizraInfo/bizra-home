@@ -7,9 +7,17 @@
  * Growth without a master — seed by seed, root by root.
  */
 
-import { Reveal } from "./shared";
+import { LiveDot, Reveal } from "./shared";
+import { classifyRuntime, runtimeDotTone } from "./runtime-status";
+import type { Node0State } from "@/components/node0/types";
 
-export function Forest() {
+export function Forest({ state, error }: { state: Node0State | null; error: string | null }) {
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const nodeLabel = kind === "LIVE"
+    ? "Node0 — live today"
+    : kind === "REFERENCE"
+      ? "Node0 — reference archive online"
+      : "Node0 — runtime status not yet observed";
   return (
     <section
       id="forest"
@@ -58,8 +66,8 @@ export function Forest() {
         <Reveal delay={0.28}>
           <div className="mt-11 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/[0.12] px-5 py-3 font-mono text-[0.66rem] tracking-[0.16em] uppercase">
             <span className="inline-flex items-center gap-2 text-cream/75">
-              <span className="size-2 rounded-full bg-verdant" aria-hidden="true" />
-              Node0 — live today
+              <LiveDot tone={runtimeDotTone(kind)} />
+              {nodeLabel}
             </span>
             <span className="text-cream/25" aria-hidden="true">·</span>
             <span className="text-cream/45">Federation — designed, not yet live</span>

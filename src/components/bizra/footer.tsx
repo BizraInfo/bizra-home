@@ -10,12 +10,14 @@ import { truncHash } from "./format";
 import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
-export function Footer({ state }: { state: Node0State | null }) {
+export function Footer({ state, error }: { state: Node0State | null; error: string | null }) {
   const rootHash = state?.constitution?.root_hash;
-  const reference = classifyRuntime(state?.runtime, state != null) === "REFERENCE";
-  const sourceNote = reference
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const sourceNote = kind === "REFERENCE"
     ? "this page invents nothing — every number is measured from the sealed Node0 reference archive (read-only presentation)"
-    : "this page invents nothing — every number is read live from the Node0 runtime";
+    : kind === "LIVE"
+      ? "this page invents nothing — every number is read live from the Node0 runtime"
+      : "this page invents nothing — current runtime evidence is unavailable, so no live measurements are claimed";
   return (
     <footer className="mt-auto w-full border-t border-white/5 bg-navy-900">
       <div className="mx-auto max-w-6xl px-6 pt-7 pb-8 sm:px-8">

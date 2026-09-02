@@ -23,8 +23,7 @@ const LINKS = [
 ];
 
 export function Nav({ state, error }: { state: Node0State | null; error: string | null }) {
-  const reachable = state != null && !error;
-  const kind = classifyRuntime(state?.runtime, reachable);
+  const kind = classifyRuntime(state?.runtime, error == null);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
   const halted = kind === "HALTED";
@@ -97,10 +96,10 @@ export function Nav({ state, error }: { state: Node0State | null; error: string 
             <a
               href="#proof"
               className="bz-focus inline-flex min-h-11 items-center gap-2.5 rounded-full border border-solar/30 bg-navy-900/60 px-4 py-2 font-mono text-[0.6875rem] tracking-[0.18em] text-solar uppercase backdrop-blur"
-              aria-label="Runtime signal lost — retrying honestly"
+              aria-label={kind === "LOST" ? "Runtime signal lost — retrying honestly" : "Reading runtime state"}
             >
-              <LiveDot tone="solar" />
-              <span className="hidden sm:inline">SIGNAL LOST</span>
+              <LiveDot tone={runtimeDotTone(kind)} />
+              <span className="hidden sm:inline">{runtimeBadge(kind)}</span>
             </a>
           )}
           <a

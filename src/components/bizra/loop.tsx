@@ -74,16 +74,18 @@ const STOPS: Stop[] = [
   },
 ];
 
-export function Loop({ state }: { state: Node0State | null }) {
+export function Loop({ state, error }: { state: Node0State | null; error: string | null }) {
   const [step, setStep] = useState(0);
-  const reference = classifyRuntime(state?.runtime, state && state.ok ? true : false) === "REFERENCE";
+  const kind = classifyRuntime(state?.runtime, error == null);
+  const reference = kind === "REFERENCE";
+  const live = kind === "LIVE";
+  const observedState = live || reference ? state : null;
 
   useEffect(() => {
     const id = setInterval(() => setStep((s) => (s + 1) % STOPS.length), 1600);
     return () => clearInterval(id);
   }, []);
 
-  const live = state && state.ok;
   const pct = (step / (STOPS.length - 1)) * 100;
 
   return (
@@ -106,7 +108,9 @@ export function Loop({ state }: { state: Node0State | null }) {
             <p className="mx-auto mt-5 max-w-2xl text-base font-light leading-relaxed text-cream/55">
               {reference
                 ? "Nothing acts without consent. Nothing is rewarded without proof. The loop below is the sealed record of a system that ran under this law — each stop carries its own measured value, read from the reference archive."
-                : "Nothing acts without consent. Nothing is rewarded without proof. The loop below is not a diagram — it is running now, and each stop carries its own live measurement."}
+                : live
+                  ? "Nothing acts without consent. Nothing is rewarded without proof. The loop below is not a diagram — it is running now, and each stop carries its own live measurement."
+                  : "Nothing acts without consent. Nothing is rewarded without proof. Current loop state is unavailable, so no running-system claim is made."}
             </p>
           </Reveal>
         </div>
@@ -145,7 +149,7 @@ export function Loop({ state }: { state: Node0State | null }) {
                     }`}
                   >
                     {live ? "▸ " : "▸ "}
-                    {stop.live(state)}
+                    {stop.live(observedState)}
                   </p>
                 </article>
               );
