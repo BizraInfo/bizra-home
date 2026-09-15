@@ -12,7 +12,7 @@
  * The only mutable surface is the engine's own contracts, clamped. The system
  * builds the system — and can always undo what it built.
  */
-import { one, run, all } from "./store";
+import { one, run, all, transaction } from "./store";
 import { nowIso, sha256hex, sha256obj } from "./hash";
 import { appendReceipt } from "./chain";
 import { relay } from "./dema";
@@ -46,6 +46,69 @@ export interface CycleReport {
   };
   sat?: { verdict: "PASS" | "FAIL"; reason: string; clauses?: any };
   transition?: { id: number; contract_key: string; before: number; after: number; receipt_seq: number; receipt_digest: string };
+}
+
+interface TransitionCommitInput {
+  cycleId: string;
+  target: string;
+  before: number;
+  after: number;
+  hypothesisId: number;
+  proposal: unknown;
+  satVerdictHash: string;
+  fateDecisionHash: string;
+}
+
+/**
+ * The only contract-transition commit point.
+ *
+ * The candidate value, receipt, and transition index are one authoritative
+ * state change. If any receipt/index write fails, SQLite restores the prior
+ * contract value and no partial transition remains visible.
+ */
+export function commitContractTransition(input: TransitionCommitInput) {
+  let committed: { receipt: ReturnType<typeof appendReceipt>; transitionId: number } | null = null;
+
+  transaction(() => {
+    const current = contractValue(input.target);
+    if (current !== input.before) {
+      throw new Error(`TRANSITION_STALE_STATE: ${input.target} is ${current}; expected ${input.before}`);
+    }
+
+    setContractValue(input.target, input.after, `AUTO:${input.cycleId}`);
+    const catalogHash = sha256hex(
+      CONTRACT_CATALOG
+        .map((c) => `${c.key}:${c.key === input.target ? input.after : contractValue(c.key)}[${c.min},${c.max}]`)
+        .join("|"),
+    );
+    const eight = {
+      cycle_hash: sha256hex(input.cycleId),
+      contract_hash: catalogHash,
+      hypothesis_hash: sha256hex(String(input.hypothesisId)),
+      proposal_hash: sha256obj(input.proposal),
+      sat_verdict_hash: input.satVerdictHash,
+      fate_decision_hash: input.fateDecisionHash,
+      before_hash: sha256hex(String(input.before)),
+      after_hash: sha256hex(String(input.after)),
+    };
+    const receipt = appendReceipt("TRANSITION_RECEIPT", `${input.cycleId}:${input.target}`, {
+      ...eight,
+      target: input.target,
+      before: input.before,
+      after: input.after,
+      reversible: true,
+      hypothesis_id: input.hypothesisId,
+    });
+    run(
+      "INSERT INTO transitions (ts, cycle_id, contract_key, before_value, after_value, hypothesis_id, receipt_seq) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      nowIso(), input.cycleId, input.target, String(input.before), String(input.after), input.hypothesisId, receipt.seq,
+    );
+    const row = one<{ id: number }>("SELECT id FROM transitions WHERE cycle_id = ? AND contract_key = ?", input.cycleId, input.target);
+    if (!row) throw new Error("TRANSITION_INDEX_MISSING: sealed receipt has no transition index");
+    committed = { receipt, transitionId: row.id };
+  });
+
+  return committed!;
 }
 
 function nextCycleId(): string {
@@ -273,30 +336,24 @@ export async function runCycle(): Promise<CycleReport> {
   // STAGE 5 — TRANSITION: apply the change, snapshot the before, seal 8 hashes
   // ------------------------------------------------------------------
   const after = Number(hypothesisRow.proposal.after_value);
+  let committed: ReturnType<typeof commitContractTransition>;
   try {
-    setContractValue(target, after, `AUTO:${cycleId}`);
+    committed = commitContractTransition({
+      cycleId,
+      target,
+      before,
+      after,
+      hypothesisId: hypothesisRow.id,
+      proposal: hypothesisRow.proposal,
+      satVerdictHash: verdict.sat_verdict_sha256,
+      fateDecisionHash: leaseDecisionHash(leaseRes.lease),
+    });
   } catch (e: any) {
-    const reason = `TRANSITION_CLAMP: ${e?.message}`;
+    const reason = `TRANSITION_NOT_COMMITTED: ${e?.message}`;
     relay("REFUSED", cycleId, reason);
     return { cycle_id: cycleId, status: "REFUSED", reason, steps, ingested, signals: signals as any };
   }
-  const catalogHash = sha256hex(CONTRACT_CATALOG.map((c) => `${c.key}:${c.key === target ? after : contractValue(c.key)}[${c.min},${c.max}]`).join("|"));
-  const eight = {
-    cycle_hash: sha256hex(cycleId),
-    contract_hash: catalogHash,
-    hypothesis_hash: sha256hex(String(hypothesisRow.id)),
-    proposal_hash: sha256obj(hypothesisRow.proposal),
-    sat_verdict_hash: verdict.sat_verdict_sha256,
-    fate_decision_hash: leaseDecisionHash(leaseRes.lease),
-    before_hash: sha256hex(String(before)),
-    after_hash: sha256hex(String(after)),
-  };
-  const receipt = appendReceipt("TRANSITION_RECEIPT", `${cycleId}:${target}`, { ...eight, target, before, after, reversible: true, hypothesis_id: hypothesisRow.id });
-  run(
-    "INSERT INTO transitions (ts, cycle_id, contract_key, before_value, after_value, hypothesis_id, receipt_seq) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    nowIso(), cycleId, target, String(before), String(after), hypothesisRow.id, receipt.seq,
-  );
-  const transitionId = one<{ id: number }>("SELECT id FROM transitions WHERE cycle_id = ? AND contract_key = ?", cycleId, target)!.id;
+  const { receipt, transitionId } = committed;
   steps.push({ stage: "TRANSITION", status: "DONE", detail: `${target}: ${before} -> ${after} applied; before-snapshot sealed; one-click REVERT armed` });
 
   const reason = `autopoietic transition sealed: ${target} ${before} -> ${after} (receipt #${receipt.seq}, 8 hashes, reversible)`;
@@ -361,16 +418,21 @@ export function revertTransition(
   // 4-7. authority confirmed BEFORE any mutation: apply, seal, mark
   const before = Number(t.before_value);
   const current = contractValue(t.contract_key);
-  setContractValue(t.contract_key, before, `REVERT:${transitionId}`);
-  const receipt = appendReceipt("TRANSITION_REVERT", `REVERT-${transitionId}`, {
-    reverted_transition: transitionId,
-    contract_key: t.contract_key,
-    from: current,
-    restored: before,
-    authority: "HUMAN",
-    fate_decision_hash: leaseDecisionHash(lease),
+  const receipt = transaction(() => {
+    const live = contractValue(t.contract_key);
+    if (live !== current) throw new Error(`TRANSITION_REVERT_STALE_STATE: ${t.contract_key} is ${live}; expected ${current}`);
+    setContractValue(t.contract_key, before, `REVERT:${transitionId}`);
+    const sealed = appendReceipt("TRANSITION_REVERT", `REVERT-${transitionId}`, {
+      reverted_transition: transitionId,
+      contract_key: t.contract_key,
+      from: current,
+      restored: before,
+      authority: "HUMAN",
+      fate_decision_hash: leaseDecisionHash(lease),
+    });
+    run("UPDATE transitions SET reverted = 1, reverted_at = ?, revert_receipt_seq = ? WHERE id = ?", nowIso(), sealed.seq, transitionId);
+    return sealed;
   });
-  run("UPDATE transitions SET reverted = 1, reverted_at = ?, revert_receipt_seq = ? WHERE id = ?", nowIso(), receipt.seq, transitionId);
   relay("DONE", `REVERT-${transitionId}`, `human reverted transition ${transitionId}: ${t.contract_key} restored to ${before}`, receipt.digest);
   ingestTrace({ source: "operator", kind: "receipt", correlation: `REVERT-${transitionId}`, payload: JSON.stringify({ event: "REVERT", transition: transitionId, restored: before }) });
   return { ok: true, receipt, restored: before };

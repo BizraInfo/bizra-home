@@ -229,6 +229,18 @@ export function all<T = any>(sql: string, ...params: unknown[]): T[] {
 export function run(sql: string, ...params: unknown[]): void {
   db.query(sql).run(...params);
 }
+
+/**
+ * Keep state mutation and its receipt in one SQLite commit point.
+ * A failed receipt must roll back the candidate state, never leave it
+ * readable as an authoritative contract value.
+ */
+export function transaction<T>(fn: () => T): T {
+  // Bun exposes Database#transaction at runtime; the bundled shim types do not
+  // declare it yet, so keep the narrow escape hatch at this boundary.
+  return (db as any).transaction(fn)();
+}
+
 export function kv(key: string, value?: string): string | null {
   if (value !== undefined) {
     run(
