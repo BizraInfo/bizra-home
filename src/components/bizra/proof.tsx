@@ -246,7 +246,9 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
           <Reveal delay={0.16}>
             <p className="mx-auto mt-5 max-w-2xl text-base font-light leading-relaxed text-cream/55">
               {reference
-                ? "The numbers below come from the sealed Node0 reference archive, not an active node. No hardcoded victories, no painted green."
+                ? state
+                  ? "The numbers below come from the sealed Node0 reference archive, not an active node. No hardcoded victories, no painted green."
+                  : "This public page is a read-only reference surface. The private Node0 runtime remains on the founder's machine; no live measurements are exposed here."
                 : live
                   ? "Every number on this page is read live from the Node0 runtime, refreshed every 2.5 seconds. If the engine goes silent, this page says so — no hardcoded victories, no painted green."
                   : "Current runtime evidence is unavailable. No runtime numbers are presented until an observed state exists — no hardcoded victories, no painted green."}
@@ -254,7 +256,7 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
           </Reveal>
         </div>
 
-        {!live ? (
+        {!live && !reference ? (
           <Reveal delay={0.1}>
             <div
               role="alert"

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Node0State } from "./types";
 import { stateUrl } from "./api";
+import { PUBLIC_REFERENCE_MODE } from "../bizra/runtime-status";
 
 const POLL_MS = 2500;
 
@@ -32,6 +33,7 @@ export function useNode0State(): Node0Snapshot {
   const inFlight = useRef<AbortController | null>(null);
 
   const refresh = useCallback(async () => {
+    if (PUBLIC_REFERENCE_MODE) return;
     inFlight.current?.abort();
     const ac = new AbortController();
     inFlight.current = ac;
@@ -53,6 +55,10 @@ export function useNode0State(): Node0Snapshot {
   }, []);
 
   useEffect(() => {
+    if (PUBLIC_REFERENCE_MODE) {
+      setLoading(false);
+      return;
+    }
     void refresh();
     const id = setInterval(() => void refresh(), POLL_MS);
     return () => {

@@ -228,12 +228,12 @@ export function Vision({ state, error }: { state: Node0State | null; error: stri
                 <div className="mt-auto border-t border-white/5 pt-4">
                   <p
                     className={`font-mono text-[0.66rem] leading-relaxed tracking-[0.08em] break-words ${
-                      live ? "text-verdant/85" : "text-solar/70"
+                      live ? "text-verdant/85" : reference ? "text-gold-500/80" : "text-solar/70"
                     }`}
                   >
                     <span className="whitespace-nowrap">▸ {organPrefix}</span>
                     <span aria-hidden="true"> · </span>
-                    {p.live(observedState)}
+                    {observedState ? p.live(observedState) : reference ? "reference-only · no live call" : "engine silent"}
                   </p>
                   <p className="mt-1.5 font-mono text-[0.6rem] tracking-[0.14em] text-cream/35 uppercase">
                     {p.sealed} · declared 3 years of study
@@ -510,7 +510,9 @@ export function Vision({ state, error }: { state: Node0State | null; error: stri
                     {r.measured
                       ? live
                         ? `▸ ${chainLen ?? "?"} receipts · 1 human node · ${state?.runtime.tz ?? "—"} · ${r.caption}`
-                        : `▸ engine silent · ${r.caption}`
+                        : reference
+                          ? `▸ reference-only · no live call · ${r.caption}`
+                          : `▸ engine silent · ${r.caption}`
                       : r.caption}
                   </p>
                 </li>

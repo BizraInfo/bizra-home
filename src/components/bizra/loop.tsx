@@ -123,6 +123,11 @@ export function Loop({ state, error }: { state: Node0State | null; error: string
           >
             {STOPS.map((stop, i) => {
               const active = i === step;
+              const measurement = observedState
+                ? stop.live(observedState)
+                : reference
+                  ? "reference-only · no live call"
+                  : "engine silent";
               return (
                 <article
                   key={stop.num}
@@ -145,11 +150,11 @@ export function Loop({ state, error }: { state: Node0State | null; error: string
                   </p>
                   <p
                     className={`mt-auto pt-3 font-mono text-[0.64rem] tracking-[0.1em] ${
-                      live ? "text-gold-500/80" : "text-solar/70"
+                      live || reference ? "text-gold-500/80" : "text-solar/70"
                     }`}
                   >
                     {live ? "▸ " : "▸ "}
-                    {stop.live(observedState)}
+                    {measurement}
                   </p>
                 </article>
               );

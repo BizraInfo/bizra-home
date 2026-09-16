@@ -21,6 +21,7 @@ export const NODE0_ACTIVE_FALSE_LABEL = "NODE0 ACTIVE = FALSE";
 export const HALTED_LABEL = "NODE0 HALTED";
 export const SIGNAL_LOST_LABEL = "RUNTIME SIGNAL LOST — RETRYING, NOTHING INVENTED";
 export const READING_LABEL = "READING THE RUNTIME — NOTHING INVENTED";
+export const PUBLIC_REFERENCE_MODE = process.env.NEXT_PUBLIC_BIZRA_PUBLIC_REFERENCE === "1";
 
 export type RuntimeKind = "LIVE" | "REFERENCE" | "HALTED" | "LOST" | "READING";
 
@@ -39,8 +40,8 @@ export interface RuntimeLike {
  *                  an explicit false is required to classify as LOST)
  */
 export function classifyRuntime(runtime: RuntimeLike | null | undefined, reachable = true): RuntimeKind {
-  if (!reachable) return "LOST";
-  if (!runtime) return "READING";
+  if (!reachable) return PUBLIC_REFERENCE_MODE ? "REFERENCE" : "LOST";
+  if (!runtime) return PUBLIC_REFERENCE_MODE ? "REFERENCE" : "READING";
   const halted = runtime.halted_reason != null || runtime.status === "HALTED";
   if (halted) return "HALTED";
   // THE law: only LOCAL_FOUNDER + server-verified node0_active may say LIVE.
