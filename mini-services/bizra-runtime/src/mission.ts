@@ -3,15 +3,15 @@
  * One nerve. One mission. The full constitutional loop in one bounded sequence:
  *
  *   recovery check -> PAT proposes -> SAT verifies -> FATE leases ->
- *   EFFECT (bounded local write) -> OBSERVE (independent hash) -> SEAL (8 hashes)
+ *   EFFECT (bounded local write) -> OBSERVE (same-process readback) -> SEAL (8 hashes)
  *
- * Exactly-once is the proof of life: kill it anywhere; restart; no duplicate effect.
+ * Recovery validates persisted proof and disk bytes; real crash-window qualification is separate.
  * The receipt binds EIGHT hashes — mission, contract, attempt, proposal, SAT verdict,
  * FATE decision, effect, observer — each sealed into the tamper-evident chain.
  */
-import { existsSync } from "node:fs";
 import { randomBytes } from "node:crypto";
-import { one, run } from "./store";
+import { join } from "node:path";
+import { one, run, OUTBOX_DIR } from "./store";
 import { nowIso, sha256hex, sha256obj, dubaiDate } from "./hash";
 import { appendReceipt } from "./chain";
 import { relay } from "./dema";
@@ -90,17 +90,55 @@ function newAttemptId(): string {
   return `ATT-${sha256hex(`${MISSION_ID}|${Date.now()}|${randomBytes(8).toString("hex")}`).slice(0, 12).toUpperCase()}`;
 }
 
+function recoveryProof(row: any, contractHash: string, expectedPath: string) {
+  const saved = JSON.parse(row.result);
+  const hashes = row.status === "SEALED" ? saved?.receipt?.eight_hashes : saved;
+  const required = ["mission_hash", "contract_hash", "attempt_hash", "proposal_hash",
+    "sat_verdict_hash", "fate_decision_hash", "effect_hash", "observer_hash"];
+  if (!hashes || !required.every(key => typeof hashes[key] === "string" && /^[a-f0-9]{64}$/.test(hashes[key]))
+    || typeof row.attempt_id !== "string" || !row.attempt_id
+    || hashes.mission_hash !== sha256hex(MISSION_ID) || hashes.contract_hash !== contractHash
+    || hashes.attempt_hash !== sha256hex(row.attempt_id) || hashes.effect_hash !== row.effect_sha256
+    || row.effect_path !== expectedPath) {
+    throw new Error("RECOVERY: missing or mismatched checkpoint bindings");
+  }
+  const observation = observe(row.effect_path);
+  if (!observation.exists || observation.observer_sha256 !== hashes.effect_hash
+    || observation.observer_sha256 !== hashes.observer_hash) {
+    throw new Error("RECOVERY: actual output does not match checkpoint");
+  }
+  const eight: Record<string, string> = Object.fromEntries(required.map(key => [key, hashes[key]]));
+  let receipt: MissionResult["receipt"];
+  if (row.status === "SEALED") {
+    const ref = saved.receipt;
+    if (!Number.isSafeInteger(ref.seq) || ref.seq <= 0 || typeof ref.digest !== "string") {
+      throw new Error("RECOVERY: missing receipt reference");
+    }
+    const durable = one<any>("SELECT * FROM receipts WHERE seq = ?", ref.seq);
+    if (!durable || durable.kind !== "MISSION_RECEIPT" || durable.subject !== MISSION_ID
+      || durable.digest !== ref.digest || (row.receipt_seq != null && row.receipt_seq !== ref.seq)
+      || sha256hex(`${durable.prev}|${durable.kind}|${durable.subject}|${durable.payload}`) !== durable.digest) {
+      throw new Error("RECOVERY: durable receipt mismatch");
+    }
+    const payload = JSON.parse(durable.payload);
+    if (!payload || !required.every(key => payload[key] === eight[key])
+      || payload.effect_path !== row.effect_path || payload.observer_bytes !== observation.bytes
+      || payload.effect_hash_matches_observer !== true) {
+      throw new Error("RECOVERY: receipt payload mismatch");
+    }
+    receipt = { seq: durable.seq, digest: durable.digest, eight_hashes: eight };
+  }
+  return { eight, observation, receipt };
+}
+
 export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise<MissionResult> {
   const contract = missionContract();
   const contractHash = sha256obj(contract);
   const row = one<any>("SELECT * FROM missions WHERE id = ?", MISSION_ID);
   const attemptId = row?.attempt_id ?? newAttemptId();
   const ladder: LadderStep[] = [];
-  const finish = (result: MissionResult, status: string, extra: Partial<any> = {}) => {
-    run(
-      "UPDATE missions SET status = ?, ladder = ?, finished_at = ?, result = ?, effect_writes = ?, attempt_id = ?, effect_path = COALESCE(?, effect_path), effect_sha256 = COALESCE(?, effect_sha256) WHERE id = ?",
-      status, JSON.stringify(ladder), nowIso(), JSON.stringify(result), extra.effect_writes ?? row?.effect_writes ?? 0, attemptId, extra.effect_path ?? null, extra.effect_sha256 ?? null, MISSION_ID,
-    );
+  let checkpoint: Record<string, string> = {};
+  const report = (result: MissionResult) => {
     relay(result.status, MISSION_ID, result.reason, result.receipt?.digest);
     ingestTrace({
       source: "mission",
@@ -109,6 +147,15 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
       payload: JSON.stringify({ mission: MISSION_ID, status: result.status, reason: result.reason, receipt: result.receipt?.digest ?? null }),
     });
     return result;
+  };
+  const finish = (result: MissionResult, status: string, extra: Partial<any> = {}) => {
+    run(
+      "UPDATE missions SET status = ?, ladder = ?, finished_at = ?, result = ?, effect_writes = ?, attempt_id = ?, effect_path = COALESCE(?, effect_path), effect_sha256 = COALESCE(?, effect_sha256), receipt_seq = COALESCE(?, receipt_seq) WHERE id = ?",
+      status, JSON.stringify(ladder), nowIso(), JSON.stringify(status === "EFFECTED" ? { ...checkpoint, ...result } : result),
+      extra.effect_writes ?? result.effect_writes_total, attemptId, extra.effect_path ?? null,
+      extra.effect_sha256 ?? null, result.receipt?.seq ?? null, MISSION_ID,
+    );
+    return report(result);
   };
 
   if (!row) {
@@ -119,57 +166,39 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
   }
 
   // ------------------------------------------------------------------
-  // STEP 0 — RECOVERY: sealed => DONE (recovered). Unsealed effect => resume exactly once.
+  // STEP 0 — RECOVERY: never regenerate an EFFECTED/SEALED mission on missing proof.
   // ------------------------------------------------------------------
-  if (row?.status === "SEALED") {
-    ladder.push({
-      step: "RECOVERY",
-      status: "SKIPPED",
-      detail: "mission already sealed — no re-execution, exactly-once holds",
-      hash: row.result ? (JSON.parse(row.result).receipt?.digest ?? null) : undefined,
-    });
-    return finish({
-      status: "DONE",
-      reason: "recovered: mission was already sealed — no effect re-executed",
-      mission_id: MISSION_ID,
-      attempt_id: row.attempt_id,
-      ladder,
-      effect_writes_total: row.effect_writes ?? 0,
-      receipt: row.result ? JSON.parse(row.result).receipt : undefined,
-      recovered: true,
-    }, "SEALED");
-  }
-  if (row?.status === "EFFECTED" && row.effect_path && existsSync(row.effect_path)) {
-    // Crash-window recovery: the effect landed, the seal did not. Resume: observe + seal. NO second write.
-    ladder.push({
-      step: "RECOVERY",
-      status: "DONE",
-      detail: "crash-window detected: effect exists without seal — resuming exactly once (no re-write)",
-      hash: row.effect_sha256 ?? undefined,
-    });
-    const observation = observe(row.effect_path);
-    const eight = {
-      mission_hash: sha256hex(MISSION_ID),
-      contract_hash: contractHash,
-      attempt_hash: sha256hex(row.attempt_id),
-      proposal_hash: row.result ? JSON.parse(row.result).proposal_hash ?? "" : "",
-      sat_verdict_hash: row.result ? JSON.parse(row.result).sat_verdict_hash ?? "" : "",
-      fate_decision_hash: row.result ? JSON.parse(row.result).fate_decision_hash ?? "" : "",
-      effect_hash: row.effect_sha256 ?? "",
-      observer_hash: observation.observer_sha256,
-    };
+  if (row?.status === "SEALED" || row?.status === "EFFECTED") {
+    let proof: ReturnType<typeof recoveryProof>;
+    try {
+      proof = recoveryProof(row, contractHash, join(OUTBOX_DIR, contract.path));
+    } catch {
+      const reason = "RECOVERY: checkpoint, output or durable receipt not confirmed; existing evidence preserved";
+      ladder.push({ step: "RECOVERY", status: "UNKNOWN", detail: reason });
+      // Preserve the original checkpoint/state, including on repeated failed recovery.
+      return report({ status: "UNKNOWN", reason, mission_id: MISSION_ID,
+        attempt_id: row.attempt_id, ladder, effect_writes_total: row.effect_writes ?? 0, recovered: true });
+    }
+    const { eight, observation } = proof;
+    ladder.push({ step: "RECOVERY", status: "DONE", detail: "persisted bindings and actual output confirmed; no rewrite", hash: eight.effect_hash });
+    if (row.status === "SEALED") {
+      ladder.push({ step: "SEAL", status: "SKIPPED", detail: "existing durable receipt confirmed; no new receipt", hash: proof.receipt!.digest });
+      return finish({ status: "DONE", reason: "recovered: output and existing durable receipt confirmed",
+        mission_id: MISSION_ID, attempt_id: row.attempt_id, ladder,
+        effect_writes_total: row.effect_writes ?? 0, receipt: proof.receipt, recovered: true }, "SEALED");
+    }
     const receipt = appendReceipt("MISSION_RECEIPT", MISSION_ID, {
       ...eight,
       recovery: true,
       effect_path: row.effect_path,
       observer_bytes: observation.bytes,
-      effect_hash_matches_observer: row.effect_sha256 === observation.observer_sha256,
+      effect_hash_matches_observer: true,
     });
-    ladder.push({ step: "OBSERVE", status: "DONE", detail: `independent re-observation: ${observation.bytes}B, sha256 matches effect`, hash: observation.observer_sha256 });
+    ladder.push({ step: "OBSERVE", status: "DONE", detail: `same-process readback: ${observation.bytes}B, sha256 matches effect`, hash: observation.observer_sha256 });
     ladder.push({ step: "SEAL", status: "DONE", detail: `receipt #${receipt.seq} seals 8 hashes (recovery path)`, hash: receipt.digest });
     return finish({
       status: "DONE",
-      reason: "recovered from crash-window: observed + sealed exactly once; the effect was never duplicated",
+      reason: "recovered: persisted proof and disk readback confirmed; no report rewrite",
       mission_id: MISSION_ID,
       attempt_id: row.attempt_id,
       ladder,
@@ -244,15 +273,28 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
   }
   ladder.push({ step: "EFFECT", status: "DONE", detail: `wrote ${contract.path} (${effect.bytes}B) — the only write this mission may ever perform`, hash: effect.effect_sha256 });
 
+  checkpoint = {
+    mission_hash: sha256hex(MISSION_ID), contract_hash: contractHash,
+    attempt_hash: sha256hex(attemptId), proposal_hash: pat.proposal.proposal_sha256,
+    sat_verdict_hash: verdict.sat_verdict_sha256, fate_decision_hash: leaseDecisionHash(leaseRes.lease),
+    effect_hash: effect.effect_sha256,
+  };
+  // Creation -> checkpoint remains a crash window; no exactly-once qualification is claimed.
+  run("UPDATE missions SET status = 'EFFECTED', effect_path = ?, effect_sha256 = ?, effect_writes = ?, result = ? WHERE id = ?",
+    effect.path, effect.effect_sha256, effect.write_count, JSON.stringify(checkpoint), MISSION_ID);
+
   // ------------------------------------------------------------------
-  // STEP 5 — OBSERVE: independent hash of the bytes on disk
+  // STEP 5 — OBSERVE: same-process readback of actual disk bytes
   // ------------------------------------------------------------------
-  const observation = observe(effect.path);
-  if (!observation.exists || observation.observer_sha256 !== effect.effect_sha256) {
+  let observation: ReturnType<typeof observe> | null;
+  try { observation = observe(effect.path); } catch { observation = null; }
+  if (!observation?.exists || observation.observer_sha256 !== effect.effect_sha256) {
     ladder.push({ step: "OBSERVE", status: "UNKNOWN", detail: "observer could not confirm the effect — recorded honestly" });
     return finish({ status: "UNKNOWN", reason: "OBSERVER: effect not confirmed on disk", mission_id: MISSION_ID, attempt_id: attemptId, ladder, effect_writes_total: effect.write_count }, "EFFECTED", { effect_path: effect.path, effect_sha256: effect.effect_sha256 });
   }
-  ladder.push({ step: "OBSERVE", status: "DONE", detail: `independent observation: ${observation.bytes}B, sha256 matches effect`, hash: observation.observer_sha256 });
+  checkpoint.observer_hash = observation.observer_sha256;
+  run("UPDATE missions SET result = ? WHERE id = ?", JSON.stringify(checkpoint), MISSION_ID);
+  ladder.push({ step: "OBSERVE", status: "DONE", detail: `same-process readback: ${observation.bytes}B, sha256 matches effect`, hash: observation.observer_sha256 });
 
   // ------------------------------------------------------------------
   // CRASH DRILL — simulate process death between OBSERVE and SEAL.
@@ -276,16 +318,7 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
   // ------------------------------------------------------------------
   // STEP 6 — SEAL: one receipt, eight hashes
   // ------------------------------------------------------------------
-  const eight = {
-    mission_hash: sha256hex(MISSION_ID),
-    contract_hash: contractHash,
-    attempt_hash: sha256hex(attemptId),
-    proposal_hash: pat.proposal.proposal_sha256,
-    sat_verdict_hash: verdict.sat_verdict_sha256,
-    fate_decision_hash: leaseDecisionHash(leaseRes.lease),
-    effect_hash: effect.effect_sha256,
-    observer_hash: observation.observer_sha256,
-  };
+  const eight = checkpoint;
   const receipt = appendReceipt("MISSION_RECEIPT", MISSION_ID, {
     ...eight,
     effect_path: effect.path,

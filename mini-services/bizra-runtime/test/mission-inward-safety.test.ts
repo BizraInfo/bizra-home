@@ -214,3 +214,170 @@ for (const entry of ["standaloneProposal", "runMission"]) {
     else expect(report.result.body.ok).toBe(false);
   });
 }
+
+const recoverySetup = setup + `
+  const { mock } = await import("bun:test");
+  let dispatches = 0;
+  mock.module("./src/model-provider.ts", () => ({
+    MODEL_AUTHORITY_LABEL: "PROPOSE_ONLY", MAX_MODEL_CALLS_PER_MISSION: 1,
+    modelCallsUsed: () => dispatches,
+    getModelSelection: () => ({ model: "fixture", digest: null, endpoint: null }),
+    modelCall: async () => { dispatches++; throw new Error("RECOVERY_MUST_NOT_DISPATCH"); }
+  }));
+  const contracts = await import("./src/contracts.ts");
+  contracts.seedContracts();
+  const mission = await import("./src/mission.ts");
+  const { sha256obj } = await import("./src/hash.ts");
+  const { createHash } = await import("node:crypto");
+  const hash = x => createHash("sha256").update(x).digest("hex");
+  const bytes = "fixture brief " + "evidence ".repeat(60);
+  let path = join(store.OUTBOX_DIR, mission.missionContract().path);
+  fs.writeFileSync(path, bytes);
+  const attempt = "FIXTURE-ATTEMPT";
+  const checkpoint = {
+    mission_hash: hash(mission.MISSION_ID), contract_hash: sha256obj(mission.missionContract()),
+    attempt_hash: hash(attempt), proposal_hash: hash("fixture proposal"),
+    sat_verdict_hash: hash("fixture verdict"), fate_decision_hash: hash("fixture lease"),
+    effect_hash: hash(bytes), observer_hash: hash(bytes),
+  };
+`;
+
+const insertCheckpoint = `
+  store.run("INSERT INTO missions (id, attempt_id, status, effect_path, effect_sha256, effect_writes, result) VALUES (?, ?, 'EFFECTED', ?, ?, 1, ?)",
+    mission.MISSION_ID, attempt, path, hash(bytes), checkpointJSON);
+`;
+
+const corruptions: [string, string][] = [
+  ["changed output", 'fs.writeFileSync(path, "corrupt fixture");'],
+  ["missing output", "fs.unlinkSync(path);"],
+  ["symlink output", 'fs.unlinkSync(path); const outside = join(process.env.BIZRA_STATE_ROOT, "outside.md"); fs.writeFileSync(outside, bytes); fs.symlinkSync(outside, path);'],
+  ["malformed checkpoint", 'checkpointJSON = "{";'],
+  ["null checkpoint", 'checkpointJSON = "null";'],
+  ["empty proposal digest", 'checkpoint.proposal_hash = "";'],
+  ["invalid proposal digest", 'checkpoint.proposal_hash = "not-a-sha256";'],
+  ["wrong attempt digest", 'checkpoint.attempt_hash = hash("other attempt");'],
+  ["wrong contract digest", 'checkpoint.contract_hash = hash("other contract");'],
+  ["wrong mission digest", 'checkpoint.mission_hash = hash("other mission");'],
+  ["wrong observer digest", 'checkpoint.observer_hash = hash("other observation");'],
+  ["wrong output filename", 'path = join(store.OUTBOX_DIR, "other.md"); fs.writeFileSync(path, bytes);'],
+];
+for (const key of ["mission_hash", "contract_hash", "attempt_hash", "proposal_hash",
+  "sat_verdict_hash", "fate_decision_hash", "effect_hash", "observer_hash"]) {
+  corruptions.push([`missing ${key}`, `delete checkpoint.${key};`]);
+}
+
+for (const [name, mutation] of corruptions) {
+  test(`EFFECTED recovery refuses ${name} without rewriting proof or dispatching`, () => {
+    const report = fixture(recoverySetup + `
+      let checkpointJSON;
+      ${mutation}
+      checkpointJSON ??= JSON.stringify(checkpoint);
+      ${insertCheckpoint}
+      const before = store.one("SELECT result FROM missions").result;
+      const beforeBytes = fs.existsSync(path) && !fs.lstatSync(path).isSymbolicLink() ? fs.readFileSync(path, "utf8") : null;
+      let result;
+      try { result = await mission.runMission(); } catch (error) { result = { status: "THREW", reason: String(error) }; }
+      const row = store.one("SELECT status, result FROM missions");
+      const afterBytes = fs.existsSync(path) && !fs.lstatSync(path).isSymbolicLink() ? fs.readFileSync(path, "utf8") : null;
+      console.log(JSON.stringify({ result, before, row, dispatches, beforeBytes, afterBytes,
+        receipts: store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n }));
+    `);
+    expect(report.result.status).toBe("UNKNOWN");
+    expect(report.result.ladder.some((step: any) => ["OBSERVE", "SEAL"].includes(step.step) && step.status === "DONE")).toBe(false);
+    expect(report.receipts).toBe(0);
+    expect(report.dispatches).toBe(0);
+    expect(report.row.status).toBe("EFFECTED");
+    expect(report.row.result).toBe(report.before);
+    expect(report.afterBytes).toBe(report.beforeBytes);
+  });
+}
+
+test("intact recovery seals actual bytes once and reuses its durable receipt", () => {
+  const report = fixture(recoverySetup + `
+    const checkpointJSON = JSON.stringify(checkpoint);
+    ${insertCheckpoint}
+    const first = await mission.runMission();
+    const second = await mission.runMission();
+    console.log(JSON.stringify({ first, second, dispatches, checkpoint,
+      bytes: fs.readFileSync(path, "utf8"), files: fs.readdirSync(store.OUTBOX_DIR),
+      receipts: store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n }));
+  `);
+  expect(report.first.status).toBe("DONE");
+  expect(report.second.status).toBe("DONE");
+  expect(report.second.receipt).toEqual(report.first.receipt);
+  expect(report.first.receipt.eight_hashes).toEqual(report.checkpoint);
+  expect(report.receipts).toBe(1);
+  expect(report.files).toHaveLength(1);
+  expect(report.dispatches).toBe(0);
+  expect(report.bytes).toBe("fixture brief " + "evidence ".repeat(60));
+});
+
+for (const [name, mutation] of [
+  ["changed output", 'fs.writeFileSync(path, "corrupt fixture");'],
+  ["missing output", "fs.unlinkSync(path);"],
+  ["missing receipt reference", 'const stored = JSON.parse(store.one("SELECT result FROM missions").result); delete stored.receipt; store.run("UPDATE missions SET result = ?", JSON.stringify(stored));'],
+  ["wrong receipt digest", 'const stored = JSON.parse(store.one("SELECT result FROM missions").result); stored.receipt.digest = hash("forged receipt"); store.run("UPDATE missions SET result = ?", JSON.stringify(stored));'],
+  ["missing durable receipt", 'store.run("DELETE FROM receipts WHERE kind=\'MISSION_RECEIPT\'");'],
+  ["changed durable payload", 'store.run("UPDATE receipts SET payload = \'{}\' WHERE kind=\'MISSION_RECEIPT\'");'],
+] as [string, string][]) {
+  test(`SEALED recovery refuses ${name}`, () => {
+    const report = fixture(recoverySetup + `
+      const checkpointJSON = JSON.stringify(checkpoint);
+      ${insertCheckpoint}
+      const first = await mission.runMission();
+      if (first.status !== "DONE") throw new Error("fixture did not seal");
+      ${mutation}
+      const before = store.one("SELECT result FROM missions").result;
+      const receiptsBefore = store.one("SELECT COUNT(*) AS n FROM receipts").n;
+      const result = await mission.runMission();
+      console.log(JSON.stringify({ result, before, dispatches, receiptsBefore,
+        after: store.one("SELECT result FROM missions").result,
+        receipts: store.one("SELECT COUNT(*) AS n FROM receipts").n }));
+    `);
+    expect(report.result.status).toBe("UNKNOWN");
+    expect(report.receipts).toBe(report.receiptsBefore);
+    expect(report.after).toBe(report.before);
+    expect(report.dispatches).toBe(0);
+  });
+}
+
+test("normal fixture crash drill persists proof for recovery without redispatch", () => {
+  const report = fixture(setup + `
+    const { mock } = await import("bun:test");
+    let dispatches = 0;
+    mock.module("./src/model-provider.ts", () => ({
+      MODEL_AUTHORITY_LABEL: "PROPOSE_ONLY", MAX_MODEL_CALLS_PER_MISSION: 1,
+      modelCallsUsed: () => dispatches,
+      getModelSelection: () => ({ model: "fixture", digest: null, endpoint: null }),
+      modelCall: async () => {
+        dispatches++;
+        const mission = await import("./src/mission.ts");
+        const contracts = await import("./src/contracts.ts");
+        const text = mission.missionContract().anchors.join("\\n") + "\\n"
+          + contracts.contractsSnapshot().map(c => c.key + "=" + c.value + " " + c.unit).join("\\n")
+          + "\\n" + "Local fixture evidence only. ".repeat(20);
+        return { ok: true, text, provider_id: "fixture", endpoint: null,
+          endpoint_class: "NONE", identity: { model_name: "fixture", model_digest: null } };
+      }
+    }));
+    const contracts = await import("./src/contracts.ts"); contracts.seedContracts();
+    const mission = await import("./src/mission.ts");
+    const first = await mission.runMission({ crashAfter: "OBSERVE" });
+    const checkpoint = JSON.parse(store.one("SELECT result FROM missions").result);
+    const before = fs.readFileSync(join(store.OUTBOX_DIR, mission.missionContract().path), "utf8");
+    const second = await mission.runMission();
+    console.log(JSON.stringify({ first, second, checkpoint, dispatches,
+      before, after: fs.readFileSync(join(store.OUTBOX_DIR, mission.missionContract().path), "utf8"),
+      receipts: store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n }));
+  `);
+  expect(report.first.status).toBe("UNKNOWN");
+  expect(report.checkpoint).not.toBeNull();
+  for (const key of ["mission_hash", "contract_hash", "attempt_hash", "proposal_hash",
+    "sat_verdict_hash", "fate_decision_hash", "effect_hash", "observer_hash"]) {
+    expect(report.checkpoint[key]).toMatch(/^[a-f0-9]{64}$/);
+  }
+  expect(report.second.status).toBe("DONE");
+  expect(report.before).toBe(report.after);
+  expect(report.dispatches).toBe(1);
+  expect(report.receipts).toBe(1);
+});
