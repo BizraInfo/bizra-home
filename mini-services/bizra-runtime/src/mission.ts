@@ -58,12 +58,12 @@ export interface LadderStep {
   hash?: string;
 }
 
-/** The measured, authoritative runtime context a proposal is built from. */
+/** Local database context; this path has no admitted Node0 liveness observation. */
 function buildMissionContext() {
   const contracts = contractsSnapshot();
   return {
     date: dubaiDate(),
-    node0_status: "LIVE",
+    node0_status: "UNKNOWN",
     constitution_root: (cRoot() ?? "").slice(0, 16),
     chain_head: (one<any>("SELECT digest FROM receipts ORDER BY seq DESC LIMIT 1")?.digest ?? "GENESIS-0").slice(0, 16),
     contracts: contracts.map((c) => ({ key: c.key, value: c.value, unit: c.unit })),

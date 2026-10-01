@@ -181,3 +181,36 @@ test("two creators leave exactly one complete artifact", () => {
   expect(report.results.filter((code: number) => code === 3)).toHaveLength(1);
   expect(["a".repeat(1000), "b".repeat(1000)]).toContain(report.text);
 });
+
+for (const entry of ["standaloneProposal", "runMission"]) {
+  test(`${entry} never presents unobserved liveness as LIVE`, () => {
+    const report = fixture(`
+      const { mock } = await import("bun:test");
+      let captured, calls = 0;
+      mock.module("./src/model-provider.ts", () => ({
+        MODEL_AUTHORITY_LABEL: "PROPOSE_ONLY", MAX_MODEL_CALLS_PER_MISSION: 1,
+        modelCallsUsed: () => 0,
+        getModelSelection: () => ({ model: "fixture", digest: null, endpoint: null }),
+        modelCall: async input => { captured = input; calls++; return {
+          ok: false, code: "FIXTURE_NO_DISPATCH", reason: "no inference",
+          provider_id: "fixture", endpoint: null, endpoint_class: "NONE"
+        }; }
+      }));
+      const mission = await import("./src/mission.ts");
+      const result = await mission.${entry}();
+      const store = await import("./src/store.ts");
+      const { readdirSync } = await import("node:fs");
+      console.log(JSON.stringify({ prompt: captured.user, calls, result,
+        artifacts: readdirSync(store.OUTBOX_DIR),
+        receipts: store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n }));
+    `);
+    expect(report.prompt).toContain('"node0_status": "UNKNOWN"');
+    expect(report.prompt).not.toContain('"node0_status": "LIVE"');
+    expect(report.prompt).not.toContain("measured, authoritative");
+    expect(report.calls).toBe(1);
+    expect(report.artifacts).toEqual([]);
+    expect(report.receipts).toBe(0);
+    if (entry === "runMission") expect(report.result.status).toBe("REFUSED");
+    else expect(report.result.body.ok).toBe(false);
+  });
+}
