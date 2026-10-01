@@ -2,7 +2,7 @@
  * BIZRA Node0 — the state snapshot. One call, the whole truth.
  * Every field is measured from sealed state — nothing here is cached, spun, or flattered.
  */
-import { all, one, kv, OUTBOX_DIR, STATE_DIR, RUNTIME_MODE, ARCHIVE_SNAPSHOT_DIR } from "./store";
+import { all, one, kv, STATE_DIR, RUNTIME_MODE, ARCHIVE_SNAPSHOT_DIR } from "./store";
 import { verifyChain, lastReceipts } from "./chain";
 import { verifyConstitution, constitutionRoot } from "./constitution";
 import { contractsSnapshot } from "./contracts";
@@ -11,7 +11,7 @@ import { patStats, lastPat } from "./pat";
 import { lastSat, satLog } from "./sat";
 import { traceStats, lastTraces } from "./traces";
 import { demaLog } from "./dema";
-import { outboxListings } from "./executor";
+import { outboxListings, readOutboxFile } from "./executor";
 import { computeSignals } from "./auto";
 import { shoulderState } from "./shoulder";
 import { modelStateProjection, modelCallLog } from "./model-provider";
@@ -163,7 +163,7 @@ export function buildState(startedAt: number, bind?: { host: string; port: numbe
     outbox: outboxListings().map((f) => {
       let preview: string | null = null;
       try {
-        preview = readFileSync(join(OUTBOX_DIR, f.name), "utf8").slice(0, 1200);
+        preview = readOutboxFile(f.name)?.slice(0, 1200) ?? null;
       } catch {
         preview = null;
       }
