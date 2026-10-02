@@ -11,7 +11,7 @@
  */
 import { randomBytes } from "node:crypto";
 import { join } from "node:path";
-import { one, run, OUTBOX_DIR } from "./store";
+import { one, run, transaction, OUTBOX_DIR } from "./store";
 import { nowIso, sha256hex, sha256obj, dubaiDate } from "./hash";
 import { appendReceipt } from "./chain";
 import { relay } from "./dema";
@@ -148,15 +148,35 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
     });
     return result;
   };
-  const finish = (result: MissionResult, status: string, extra: Partial<any> = {}) => {
+  const persist = (result: MissionResult, status: string, extra: Partial<any> = {}) => {
     run(
       "UPDATE missions SET status = ?, ladder = ?, finished_at = ?, result = ?, effect_writes = ?, attempt_id = ?, effect_path = COALESCE(?, effect_path), effect_sha256 = COALESCE(?, effect_sha256), receipt_seq = COALESCE(?, receipt_seq) WHERE id = ?",
       status, JSON.stringify(ladder), nowIso(), JSON.stringify(status === "EFFECTED" ? { ...checkpoint, ...result } : result),
       extra.effect_writes ?? result.effect_writes_total, attemptId, extra.effect_path ?? null,
       extra.effect_sha256 ?? null, result.receipt?.seq ?? null, MISSION_ID,
     );
-    return report(result);
+    return result;
   };
+  const finish = (result: MissionResult, status: string, extra: Partial<any> = {}) => report(persist(result, status, extra));
+  const seal = (recovered: boolean) => report(transaction(() => {
+    // Rebind inside the transaction: another caller may have sealed since the initial read.
+    const current = one<any>("SELECT * FROM missions WHERE id = ?", MISSION_ID);
+    if (!current || !["EFFECTED", "SEALED"].includes(current.status)) throw new Error("MISSION_STALE_CHECKPOINT");
+    const proof = recoveryProof(current, contractHash, join(OUTBOX_DIR, contract.path));
+    const receipt = proof.receipt ?? appendReceipt("MISSION_RECEIPT", MISSION_ID, {
+      ...proof.eight, recovery: recovered, effect_path: current.effect_path,
+      observer_bytes: proof.observation.bytes, effect_hash_matches_observer: true,
+    });
+    ladder.push({ step: "SEAL", status: proof.receipt ? "SKIPPED" : "DONE",
+      detail: proof.receipt ? "existing durable receipt confirmed; no new receipt" : `receipt #${receipt.seq} seals 8 hashes`,
+      hash: receipt.digest });
+    return persist({ status: "DONE", reason: "output and durable receipt confirmed; no duplicate report effect",
+      mission_id: MISSION_ID, attempt_id: current.attempt_id, ladder,
+      effect_writes_total: current.effect_writes,
+      receipt: { seq: receipt.seq, digest: receipt.digest, eight_hashes: proof.eight },
+      recovered: recovered || !!proof.receipt }, "SEALED",
+      { effect_path: current.effect_path, effect_sha256: current.effect_sha256 });
+  }));
 
   if (!row) {
     run(
@@ -187,25 +207,8 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
         mission_id: MISSION_ID, attempt_id: row.attempt_id, ladder,
         effect_writes_total: row.effect_writes ?? 0, receipt: proof.receipt, recovered: true }, "SEALED");
     }
-    const receipt = appendReceipt("MISSION_RECEIPT", MISSION_ID, {
-      ...eight,
-      recovery: true,
-      effect_path: row.effect_path,
-      observer_bytes: observation.bytes,
-      effect_hash_matches_observer: true,
-    });
     ladder.push({ step: "OBSERVE", status: "DONE", detail: `same-process readback: ${observation.bytes}B, sha256 matches effect`, hash: observation.observer_sha256 });
-    ladder.push({ step: "SEAL", status: "DONE", detail: `receipt #${receipt.seq} seals 8 hashes (recovery path)`, hash: receipt.digest });
-    return finish({
-      status: "DONE",
-      reason: "recovered: persisted proof and disk readback confirmed; no report rewrite",
-      mission_id: MISSION_ID,
-      attempt_id: row.attempt_id,
-      ladder,
-      effect_writes_total: row.effect_writes ?? 1,
-      receipt: { seq: receipt.seq, digest: receipt.digest, eight_hashes: eight },
-      recovered: true,
-    }, "SEALED", { effect_path: row.effect_path, effect_sha256: row.effect_sha256 });
+    return seal(true);
   }
 
   // ------------------------------------------------------------------
@@ -318,28 +321,7 @@ export async function runMission(opts: { crashAfter?: "OBSERVE" } = {}): Promise
   // ------------------------------------------------------------------
   // STEP 6 — SEAL: one receipt, eight hashes
   // ------------------------------------------------------------------
-  const eight = checkpoint;
-  const receipt = appendReceipt("MISSION_RECEIPT", MISSION_ID, {
-    ...eight,
-    effect_path: effect.path,
-    observer_bytes: observation.bytes,
-    effect_hash_matches_observer: true,
-  });
-  ladder.push({ step: "SEAL", status: "DONE", detail: `receipt #${receipt.seq} seals 8 hashes`, hash: receipt.digest });
-
-  return finish(
-    {
-      status: "DONE",
-      reason: "mission complete: one proposal, one verdict, one lease, one effect, one observation, one receipt binding 8 hashes",
-      mission_id: MISSION_ID,
-      attempt_id: attemptId,
-      ladder,
-      effect_writes_total: effect.write_count,
-      receipt: { seq: receipt.seq, digest: receipt.digest, eight_hashes: eight },
-    },
-    "SEALED",
-    { effect_path: effect.path, effect_sha256: effect.effect_sha256, effect_writes: effect.write_count },
-  );
+  return seal(false);
 }
 
 // ---------------------------------------------------------------------------

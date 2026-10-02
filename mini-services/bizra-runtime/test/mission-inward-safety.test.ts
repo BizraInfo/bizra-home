@@ -341,8 +341,7 @@ for (const [name, mutation] of [
   });
 }
 
-test("normal fixture crash drill persists proof for recovery without redispatch", () => {
-  const report = fixture(setup + `
+const normalSetup = setup + `
     const { mock } = await import("bun:test");
     let dispatches = 0;
     mock.module("./src/model-provider.ts", () => ({
@@ -362,6 +361,10 @@ test("normal fixture crash drill persists proof for recovery without redispatch"
     }));
     const contracts = await import("./src/contracts.ts"); contracts.seedContracts();
     const mission = await import("./src/mission.ts");
+`;
+
+test("normal fixture crash drill persists proof for recovery without redispatch", () => {
+  const report = fixture(normalSetup + `
     const first = await mission.runMission({ crashAfter: "OBSERVE" });
     const checkpoint = JSON.parse(store.one("SELECT result FROM missions").result);
     const before = fs.readFileSync(join(store.OUTBOX_DIR, mission.missionContract().path), "utf8");
@@ -381,3 +384,32 @@ test("normal fixture crash drill persists proof for recovery without redispatch"
   expect(report.dispatches).toBe(1);
   expect(report.receipts).toBe(1);
 });
+
+for (const entry of ["normal", "recovery"]) {
+  test(`${entry} seal update failure cannot leave a duplicate success receipt`, () => {
+    const start = entry === "normal" ? normalSetup
+      : recoverySetup + `const checkpointJSON = JSON.stringify(checkpoint); ${insertCheckpoint}`;
+    const report = fixture(start + `
+      store.db.exec("CREATE TRIGGER fail_seal BEFORE UPDATE OF status ON missions WHEN NEW.status = 'SEALED' BEGIN SELECT RAISE(ABORT, 'injected mission seal failure'); END;");
+      let error = "";
+      try { await mission.runMission(); } catch (failure) { error = String(failure); }
+      const failed = store.one("SELECT * FROM missions");
+      const receiptsAfterFailure = store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n;
+      const outputBefore = fs.readFileSync(failed.effect_path, "utf8");
+      store.db.exec("DROP TRIGGER fail_seal");
+      const recovered = await mission.runMission();
+      const repeated = await mission.runMission();
+      console.log(JSON.stringify({ error, failed, receiptsAfterFailure, recovered, repeated, dispatches,
+        outputBefore, outputAfter: fs.readFileSync(failed.effect_path, "utf8"),
+        receipts: store.one("SELECT COUNT(*) AS n FROM receipts WHERE kind='MISSION_RECEIPT'").n }));
+    `);
+    expect(report.error).toContain("injected mission seal failure");
+    expect(report.failed.status).toBe("EFFECTED");
+    expect(report.receiptsAfterFailure).toBe(0);
+    expect(report.recovered.status).toBe("DONE");
+    expect(report.repeated.receipt).toEqual(report.recovered.receipt);
+    expect(report.outputAfter).toBe(report.outputBefore);
+    expect(report.dispatches).toBe(entry === "normal" ? 1 : 0);
+    expect(report.receipts).toBe(1);
+  });
+}
