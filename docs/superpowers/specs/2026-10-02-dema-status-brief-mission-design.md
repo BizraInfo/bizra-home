@@ -1,6 +1,7 @@
 # One useful DEMA mission: a source-cited Node0 status brief
 
-Status: PROPOSED ARCHITECTURAL DESIGN — awaiting written-spec review.
+Status: APPROVED DESIGN — user GO accepted for the corrected runtime source scope;
+written plan approved for native execution. No mission or deployment authorized.
 Date: 2026-10-02, Asia/Dubai.
 Backlog: TASK-075.26 under TASK-075 in `/home/bizra-operating-system/Downloads/Dema`.
 
@@ -240,3 +241,5 @@ review it and select its execution method. The first implementation candidate mu
 close the smallest necessary refusal/recovery gap; deployment and the eventual
 exact report-execution grant remain separate. Do not reopen the campaign by
 mistaking a local source change or this document for authority.
+
+Source-slice result: the first three inward repairs are locally integrated/tested at `459a0850`. Broader qualification gates 4–7, actual mission execution and human usefulness remain open. See the implementation plan and local evidence directory for the bounded result.
