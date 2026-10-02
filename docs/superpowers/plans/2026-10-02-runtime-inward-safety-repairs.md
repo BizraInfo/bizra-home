@@ -225,10 +225,10 @@ On the normal effect path compute the eight existing bindings once, persist them
 
 ## Receipt and self-review
 
-- [ ] Save RED/GREEN commands, statuses, output and source/diff SHA-256 bindings under one unique `/data/bizra/logs/runtime-inward-safety-*` directory.
-- [ ] Rehash the campaign pointer/state and protected source preimages; disclose source/test/document writes separately from runtime/campaign state.
+- [x] Save RED/GREEN commands, statuses, output and source/diff SHA-256 bindings under one unique `/data/bizra/logs/runtime-inward-safety-*` directory.
+- [x] Rehash the campaign pointer/state and protected source preimages; disclose source/test/document writes separately from runtime/campaign state.
 - [ ] Mark TASK-075.26 as partially advanced only through the Backlog CLI if task tracking is updated. These three prerequisite repairs do not satisfy its real-effect/usefulness acceptance criteria.
-- [ ] Leave deployment, a real model/mission call and Node0 closure NOT_RUN. No simulated impact, trained RL or realized usefulness claim.
+- [x] Leave deployment, a real model/mission call and Node0 closure NOT_RUN. No simulated impact, trained RL or realized usefulness claim.
 
 Self-review: this plan covers only the separately approved first three inward repairs. It preserves owners, result signatures, metadata disclosure and refusal semantics. The five review-focus cases have explicit owning tasks. Full report rendering/consent/independent checker/crash qualification/HTTP envelopes are intentionally separate remaining work from the architectural spec, not silently completed here.
 
@@ -237,4 +237,4 @@ Self-review: this plan covers only the separately approved first three inward re
 Status: COMPLETED LOCAL SOURCE SLICE — approved native execution, integrated at `459a0850`; deployment and real mission qualification NOT_RUN.
 Recommended method: Native, because these three tasks share one executor/mission flow and one focused fixture harness. A fresh reviewer checks the resulting slice before completion. User may instead choose subagent-driven execution.
 
-Execution evidence: `/data/bizra/logs/runtime-inward-safety-20261002/`. Integrated suite: 123/123; 44 focused checks. Fresh review found one receipt/state atomicity regression, fixed RED→GREEN with existing SQLite transaction. No Minor findings. Canonical checkout typecheck has a pre-existing shared UI alias failure (`runtime-status.ts:18`, TS2307), reproduced with pre-repair runtime source plus unchanged dirty UI. Isolated typecheck and integrated typecheck using the existing root alias mapping pass. No UI/config repair was made. TASK-075.26 remains open.
+Execution evidence: `/data/bizra/logs/runtime-inward-safety-20261002/`. Integrated suite: 123/123; 44 focused checks. Fresh review found one receipt/state atomicity regression, fixed RED→GREEN with existing SQLite transaction. No Minor findings. Canonical checkout typecheck has a pre-existing shared UI alias failure (`runtime-status.ts:18`, TS2307), reproduced with pre-repair runtime source plus unchanged dirty UI. Isolated typecheck passes. The first evidence-only integrated config failed Node type discovery because it lived outside the checkout; adding the checkout typeRoots to that evidence config corrected the setup. The corrected integrated typecheck (integrated-alias-typecheck-r2.log) passes with the existing root alias mapping. The canonical command still has the reproduced baseline TS2307 failure. No UI/config repair was made. TASK-075.26 remains open.
