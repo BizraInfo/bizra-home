@@ -12,12 +12,14 @@ import type { Node0State } from "@/components/node0/types";
 
 export function Footer({ state, error }: { state: Node0State | null; error: string | null }) {
   const rootHash = state?.constitution?.root_hash;
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const sourceNote = kind === "REFERENCE"
     ? "this page invents nothing — every number is measured from the sealed Node0 reference archive (read-only presentation)"
     : kind === "LIVE"
       ? "this page invents nothing — every number is read live from the Node0 runtime"
-      : "this page invents nothing — current runtime evidence is unavailable, so no live measurements are claimed";
+      : kind === "MISMATCH"
+        ? "this page invents nothing — the runtime contract mismatched, so no live measurements are claimed"
+        : "this page invents nothing — current runtime evidence is unavailable, so no live measurements are claimed";
   return (
     <footer className="mt-auto w-full border-t border-white/5 bg-navy-900">
       <div className="mx-auto max-w-6xl px-6 pt-7 pb-8 sm:px-8">

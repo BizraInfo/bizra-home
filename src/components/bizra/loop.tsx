@@ -76,9 +76,10 @@ const STOPS: Stop[] = [
 
 export function Loop({ state, error }: { state: Node0State | null; error: string | null }) {
   const [step, setStep] = useState(0);
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const reference = kind === "REFERENCE";
   const live = kind === "LIVE";
+  const contractMismatch = kind === "MISMATCH";
   const observedState = live || reference ? state : null;
 
   useEffect(() => {
@@ -127,7 +128,9 @@ export function Loop({ state, error }: { state: Node0State | null; error: string
                 ? stop.live(observedState)
                 : reference
                   ? "reference-only · no live call"
-                  : "engine silent";
+                  : contractMismatch
+                    ? "runtime contract mismatch · no live call"
+                    : "engine silent";
               return (
                 <article
                   key={stop.num}

@@ -9,6 +9,9 @@
  * well (defense in depth — the runtime refuses them too).
  */
 
+import { node0ContractFailure, validateNode0StateEnvelope } from "@/lib/runtime-contract";
+import { hasInviteAccess } from "@/lib/invite";
+
 const NODE0_TARGET = "http://127.0.0.1:7421";
 const CALLER_PORT_PARAM = ["X", "Transform", "Port"].join("");
 
@@ -21,6 +24,19 @@ function sanitizeSegments(segments: string[]): string | null {
 }
 
 async function forward(req: Request, segments: string[]): Promise<Response> {
+  if (req.method !== "GET") {
+    return Response.json(
+      { ok: false, refused: true, reason: "NODE0_READ_ONLY: writes are not available through this workbench" },
+      { status: 405, headers: { allow: "GET" } },
+    );
+  }
+  if (!(await hasInviteAccess())) {
+    return Response.json(
+      { ok: false, refused: true, reason: "NODE0_INVITE_REQUIRED" },
+      { status: 401 },
+    );
+  }
+
   const url = new URL(req.url);
   if (url.searchParams.has(CALLER_PORT_PARAM)) {
     return Response.json(
@@ -36,17 +52,30 @@ async function forward(req: Request, segments: string[]): Promise<Response> {
   if (path === null) {
     return Response.json({ ok: false, reason: "PATH_REFUSED: malformed node0 path" }, { status: 400 });
   }
-  const method = req.method === "POST" ? "POST" : "GET";
   try {
     const init: RequestInit = {
-      method,
+      method: "GET",
       headers: { "content-type": req.headers.get("content-type") ?? "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(6000),
     };
-    if (method === "POST") init.body = await req.text();
     const res = await fetch(`${NODE0_TARGET}/api/${path}`, init);
     const body = await res.arrayBuffer();
+    if (path === "state") {
+      if (!res.ok) {
+        return Response.json(node0ContractFailure(res.status, "HTTP_STATUS"), { status: 502 });
+      }
+      const text = new TextDecoder().decode(body);
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return Response.json(node0ContractFailure(res.status, "INVALID_JSON"), { status: 502 });
+      }
+      if (!validateNode0StateEnvelope(parsed)) {
+        return Response.json(node0ContractFailure(res.status, "INVALID_STATE_SHAPE"), { status: 502 });
+      }
+    }
     return new Response(body, {
       status: res.status,
       headers: {

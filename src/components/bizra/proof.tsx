@@ -215,9 +215,10 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
     return () => clearInterval(id);
   }, []);
 
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
+  const contractMismatch = kind === "MISMATCH";
 
   return (
     <section
@@ -264,11 +265,17 @@ export function Proof({ state, error }: { state: Node0State | null; error: strin
             >
               <p className="inline-flex items-center gap-2.5 font-mono text-[0.72rem] tracking-[0.2em] text-solar uppercase">
                 <LiveDot tone="solar" />
-                {error ? "Runtime signal lost — the last verified state stands" : "Reading the runtime — first heartbeat arriving"}
+                {error
+                  ? contractMismatch
+                    ? "Runtime contract mismatch — state unknown"
+                    : "Runtime signal lost — the last verified state stands"
+                  : "Reading the runtime — first heartbeat arriving"}
               </p>
               <p className="mt-4 text-sm font-light leading-relaxed text-cream/50">
                 {error
-                  ? "The constitutional engine on port 7421 did not answer the last poll. Nothing below is invented while it is silent — the page keeps listening and will speak again the moment the engine does."
+                  ? contractMismatch
+                    ? "The runtime answered, but its response did not match the expected Node0 state contract. Nothing below is invented until the exact contract is rebound."
+                    : "The constitutional engine on port 7421 did not answer the last poll. Nothing below is invented while it is silent — the page keeps listening and will speak again the moment the engine does."
                   : "No runtime snapshot has been observed yet. Nothing below is invented while the first read is pending."}{" "}
                 {state ? "The measurements shown while unreachable are the last observed snapshot." : ""}
               </p>

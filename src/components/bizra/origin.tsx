@@ -10,7 +10,7 @@ import { classifyRuntime } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Origin({ state, error }: { state: Node0State | null; error: string | null }) {
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const reference = kind === "REFERENCE";
   const live = kind === "LIVE";
   const node0Card = reference

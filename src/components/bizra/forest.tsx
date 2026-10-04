@@ -12,11 +12,13 @@ import { classifyRuntime, runtimeDotTone } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Forest({ state, error }: { state: Node0State | null; error: string | null }) {
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const nodeLabel = kind === "LIVE"
     ? "Node0 — live today"
     : kind === "REFERENCE"
       ? "Node0 — reference archive online"
+      : kind === "MISMATCH"
+        ? "Node0 — runtime contract mismatch"
       : "Node0 — runtime status not yet observed";
   return (
     <section

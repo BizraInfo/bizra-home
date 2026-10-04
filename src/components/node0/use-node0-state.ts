@@ -39,7 +39,10 @@ export function useNode0State(): Node0Snapshot {
     inFlight.current = ac;
     try {
       const res = await fetch(stateUrl(), { signal: ac.signal, cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const failure = (await res.json().catch(() => null)) as { reason?: unknown } | null;
+        throw new Error(typeof failure?.reason === "string" ? failure.reason : `HTTP ${res.status}`);
+      }
       const json = (await res.json()) as Node0State;
       if (!json || json.ok !== true) throw new Error("runtime reported not-ok");
       setData(json);
