@@ -149,11 +149,18 @@ function PoolMark() {
 }
 
 export function Vision({ state, error }: { state: Node0State | null; error: string | null }) {
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
+  const contractMismatch = kind === "MISMATCH";
   const observedState = live || reference ? state : null;
-  const organPrefix = reference ? "measured organ (reference)" : live ? "live organ" : "runtime organ unavailable";
+  const organPrefix = reference
+    ? "measured organ (reference)"
+    : live
+      ? "live organ"
+      : contractMismatch
+        ? "runtime contract mismatch"
+        : "runtime organ unavailable";
   const chainLen = state?.chain.len;
 
   return (
@@ -233,7 +240,13 @@ export function Vision({ state, error }: { state: Node0State | null; error: stri
                   >
                     <span className="whitespace-nowrap">▸ {organPrefix}</span>
                     <span aria-hidden="true"> · </span>
-                    {observedState ? p.live(observedState) : reference ? "reference-only · no live call" : "engine silent"}
+                    {observedState
+                      ? p.live(observedState)
+                      : reference
+                        ? "reference-only · no live call"
+                        : contractMismatch
+                          ? "contract mismatch · no live call"
+                          : "engine silent"}
                   </p>
                   <p className="mt-1.5 font-mono text-[0.6rem] tracking-[0.14em] text-cream/35 uppercase">
                     {p.sealed} · declared 3 years of study
@@ -512,7 +525,7 @@ export function Vision({ state, error }: { state: Node0State | null; error: stri
                         ? `▸ ${chainLen ?? "?"} receipts · 1 human node · ${state?.runtime.tz ?? "—"} · ${r.caption}`
                         : reference
                           ? `▸ reference-only · no live call · ${r.caption}`
-                          : `▸ engine silent · ${r.caption}`
+                          : `▸ ${contractMismatch ? "contract mismatch" : "engine silent"} · ${r.caption}`
                       : r.caption}
                   </p>
                 </li>

@@ -3,8 +3,7 @@
 /**
  * BIZRA — The Invitation.
  *
- * Node0 is open. Read the code, run the five commands, hold the first
- * receipt in your hands. The forest begins with whoever arrives first.
+ * The public story is open; Dema's install path remains invitation-only.
  */
 
 import { SeedMark } from "./seed-mark";
@@ -33,29 +32,26 @@ export function Invitation() {
         </Reveal>
         <Reveal delay={0.14}>
           <p className="mx-auto mt-5 max-w-md text-[0.95rem] font-light leading-[1.8] text-cream/55 sm:text-base">
-            Node0 is open. Read the code, run the five commands, and hold the first
-            receipt in your own hands. No promises to believe — only proofs to verify.
-            The forest begins with whoever arrives first.
+            The public story is open. Dema&apos;s local onboarding and install path are
+            shared by invitation, with every runtime claim kept inside its evidence boundary.
           </p>
         </Reveal>
         <Reveal delay={0.2}>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-5">
             <a
-              href="https://github.com/BizraInfo"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/invite?next=/onboarding"
               className="bz-btn-gold bz-focus"
             >
-              Open the repository
+              Enter by invitation
             </a>
-            <a href="#proof" className="bz-btn-ghost bz-focus">
-              Witness the proof
+            <a href="/docs" className="bz-btn-ghost bz-focus">
+              Read the field guide
             </a>
           </div>
         </Reveal>
         <Reveal delay={0.26}>
           <p className="mt-8 font-mono text-[0.64rem] tracking-[0.2em] text-cream/30 uppercase">
-            github.com/BizraInfo · Dema · BIZRA-OS · the dual agentic system
+            Dema · BIZRA-OS · local-first · consent-bound
           </p>
         </Reveal>
       </div>

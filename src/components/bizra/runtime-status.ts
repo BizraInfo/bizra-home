@@ -15,15 +15,18 @@
  * component tree.
  */
 
+import { NODE0_RUNTIME_CONTRACT_MISMATCH } from "@/lib/runtime-contract";
+
 export const LIVE_LABEL = "NODE0 LIVE";
 export const REFERENCE_LABEL = "REFERENCE ARCHIVE ONLINE";
 export const NODE0_ACTIVE_FALSE_LABEL = "NODE0 ACTIVE = FALSE";
 export const HALTED_LABEL = "NODE0 HALTED";
 export const SIGNAL_LOST_LABEL = "RUNTIME SIGNAL LOST — RETRYING, NOTHING INVENTED";
+export const CONTRACT_MISMATCH_LABEL = "RUNTIME CONTRACT MISMATCH — STATE UNKNOWN";
 export const READING_LABEL = "READING THE RUNTIME — NOTHING INVENTED";
 export const PUBLIC_REFERENCE_MODE = process.env.NEXT_PUBLIC_BIZRA_PUBLIC_REFERENCE === "1";
 
-export type RuntimeKind = "LIVE" | "REFERENCE" | "HALTED" | "LOST" | "READING";
+export type RuntimeKind = "LIVE" | "REFERENCE" | "HALTED" | "MISMATCH" | "LOST" | "READING";
 
 export interface RuntimeLike {
   mode?: string;
@@ -38,9 +41,13 @@ export interface RuntimeLike {
  * @param runtime  the runtime block from /api/state (or null when unread)
  * @param reachable whether the runtime answered the last poll (default true —
  *                  an explicit false is required to classify as LOST)
+ * @param reason optional structured transport failure reason
  */
-export function classifyRuntime(runtime: RuntimeLike | null | undefined, reachable = true): RuntimeKind {
-  if (!reachable) return PUBLIC_REFERENCE_MODE ? "REFERENCE" : "LOST";
+export function classifyRuntime(runtime: RuntimeLike | null | undefined, reachable = true, reason?: string | null): RuntimeKind {
+  if (!reachable) {
+    if (PUBLIC_REFERENCE_MODE) return "REFERENCE";
+    return reason === NODE0_RUNTIME_CONTRACT_MISMATCH ? "MISMATCH" : "LOST";
+  }
   if (!runtime) return PUBLIC_REFERENCE_MODE ? "REFERENCE" : "READING";
   const halted = runtime.halted_reason != null || runtime.status === "HALTED";
   if (halted) return "HALTED";
@@ -63,6 +70,8 @@ export function runtimeLabel(kind: RuntimeKind): string {
       return HALTED_LABEL;
     case "LOST":
       return SIGNAL_LOST_LABEL;
+    case "MISMATCH":
+      return CONTRACT_MISMATCH_LABEL;
     default:
       return READING_LABEL;
   }
@@ -79,6 +88,8 @@ export function runtimeBadge(kind: RuntimeKind): string {
       return "HALTED";
     case "LOST":
       return "SIGNAL LOST";
+    case "MISMATCH":
+      return "CONTRACT MISMATCH";
     default:
       return "READING";
   }
@@ -94,6 +105,8 @@ export function runtimeDotTone(kind: RuntimeKind): "verdant" | "solar" | "ember"
     case "HALTED":
       return "ember";
     case "LOST":
+      return "solar";
+    case "MISMATCH":
       return "solar";
     default:
       return "solar";

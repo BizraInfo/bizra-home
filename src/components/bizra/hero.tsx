@@ -9,14 +9,14 @@
  */
 
 import { SeedMark } from "./seed-mark";
-import { LiveDot } from "./shared";
+import { LiveDot, TruthChip } from "./status-ui";
 import { truncHash } from "./format";
 import { classifyRuntime, runtimeLabel, runtimeDotTone, NODE0_ACTIVE_FALSE_LABEL, classifyModel, modelLabel } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 export function Hero({ state, error }: { state: Node0State | null; error: string | null }) {
   const reachable = state != null && !error;
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
   const dotTone = runtimeDotTone(kind);
@@ -27,6 +27,22 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
   // only from the runtime's verified observation — never from configuration.
   const modelKind = classifyModel(state?.model);
   const modelLine = modelLabel(modelKind, state?.model);
+  const publicRuntimeLabel = live
+    ? "Measured · local Node0"
+    : reference
+      ? "Reference-only"
+      : kind === "HALTED"
+        ? "Blocked"
+        : kind === "MISMATCH"
+          ? "Unknown · contract mismatch"
+        : "Unknown";
+  const publicRuntimeTone = live
+    ? "verdant"
+    : reference
+      ? "gold"
+      : kind === "HALTED"
+        ? "ember"
+        : "solar";
 
   return (
     <section
@@ -65,15 +81,18 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
       </div>
 
       <h1
-        className="bz-gold-text bz-rise mt-8 font-serif text-[3.4rem] font-semibold tracking-[0.24em] sm:mt-10 sm:text-8xl"
-        style={{ animationDelay: "2.8s" }}
+        className="bz-gold-text bz-rise mt-8 text-[3.4rem] font-semibold tracking-[0.24em] sm:mt-10 sm:text-8xl"
+        style={{
+          animationDelay: "0.15s",
+          fontFamily: "Georgia, 'Times New Roman', Times, serif",
+        }}
       >
         BIZRA
       </h1>
 
       <p
         className="bz-rise mt-4 font-arabic text-2xl text-gold-500/70 sm:text-3xl"
-        style={{ animationDelay: "3.1s" }}
+        style={{ animationDelay: "0.35s" }}
         lang="ar"
       >
         البذرة
@@ -81,24 +100,23 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
 
       <p
         className="bz-rise mt-6 max-w-3xl text-center font-serif text-xl italic text-cream/85 sm:mt-7 sm:text-[1.7rem]"
-        style={{ animationDelay: "3.35s" }}
+        style={{ animationDelay: "0.45s" }}
       >
         The Seed of Sovereign Intelligence
       </p>
 
       <p
         className="bz-rise mt-4 max-w-xl text-center text-[0.95rem] font-light leading-[1.75] text-cream/55 sm:text-base"
-        style={{ animationDelay: "3.55s" }}
+        style={{ animationDelay: "0.55s" }}
       >
-        A human-first AI ecosystem that turns intention into verified, ethical, meaningful
-        action. Not born from a startup or a lab — born from the pain of people, by one of
-        them. Built by one person, over three years, every single day.
+        Local-first intelligence that turns human intent into consented, verifiable action.
+        Explore the measured reference archive, then enter Dema when invited.
       </p>
 
       {/* The live heartbeat — real data or honest silence, never invention */}
       <div
         className="bz-rise mt-9 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-mono text-[0.68rem] tracking-[0.16em] uppercase sm:gap-x-4"
-        style={{ animationDelay: "3.7s" }}
+        style={{ animationDelay: "0.65s" }}
         role="status"
         aria-live="off"
       >
@@ -146,19 +164,27 @@ export function Hero({ state, error }: { state: Node0State | null; error: string
       </div>
 
       <div
+        className="bz-rise mt-6 flex flex-wrap items-center justify-center gap-2"
+        style={{ animationDelay: "0.75s" }}
+        aria-label="Current public state"
+      >
+        <TruthChip label={publicRuntimeLabel} tone={publicRuntimeTone} />
+        <TruthChip label="Dema · invitation" tone="solar" />
+        <TruthChip label="Federation · designed not live" tone="neutral" />
+      </div>
+
+      <div
         className="bz-rise mt-10 flex flex-col items-center gap-4 sm:flex-row sm:gap-5"
-        style={{ animationDelay: "3.85s" }}
+        style={{ animationDelay: "0.85s" }}
       >
         <a href="#proof" className="bz-btn-gold bz-focus">
-          Witness the proof
+          Explore measured proof
         </a>
         <a
-          href="https://github.com/BizraInfo"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/invite?next=/onboarding"
           className="bz-btn-ghost bz-focus"
         >
-          Plant your seed
+          Enter Dema · invitation
         </a>
       </div>
 

@@ -165,7 +165,7 @@ export async function proposeMissionBrief(
     "You have no tools, no network, no authority. You never execute. Output ONLY the requested artifact — no preamble, no code fences, no commentary.";
   const user =
     `Write the BIZRA NODE0 morning delta brief as clean markdown.\n\n` +
-    `Runtime context (measured, authoritative):\n${JSON.stringify(context, null, 2)}\n\n` +
+    `Local database context (Node0 liveness is unmeasured unless separately evidenced):\n${JSON.stringify(context, null, 2)}\n\n` +
     `Hard form law (a deterministic verifier will check every clause):\n` +
     `- 120 to 250 words of markdown.\n` +
     `- MUST contain verbatim, each on its own occurrence: ${anchors.map((a) => JSON.stringify(a)).join(", ")}.\n` +

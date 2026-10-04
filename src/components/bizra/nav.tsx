@@ -8,11 +8,12 @@
 
 import { Github } from "lucide-react";
 import { SeedMark } from "./seed-mark";
-import { LiveDot } from "./shared";
+import { LiveDot } from "./status-ui";
 import { classifyRuntime, runtimeBadge, runtimeDotTone } from "./runtime-status";
 import type { Node0State } from "@/components/node0/types";
 
 const LINKS = [
+  { href: "/docs", label: "Start here" },
   { href: "#origin", label: "Origin" },
   { href: "#fracture", label: "Fracture" },
   { href: "#loop", label: "Loop" },
@@ -23,7 +24,7 @@ const LINKS = [
 ];
 
 export function Nav({ state, error }: { state: Node0State | null; error: string | null }) {
-  const kind = classifyRuntime(state?.runtime, error == null);
+  const kind = classifyRuntime(state?.runtime, error == null, error);
   const live = kind === "LIVE";
   const reference = kind === "REFERENCE";
   const halted = kind === "HALTED";
@@ -45,11 +46,12 @@ export function Nav({ state, error }: { state: Node0State | null; error: string 
           aria-label="BIZRA — back to the top"
         >
           <SeedMark size={34} tone="full" className="transition-transform duration-500 group-hover:rotate-[60deg]" />
-          <span className="font-serif text-lg font-semibold tracking-[0.28em] text-cream">
+          {/* System serif for LCP — avoid blocking the wordmark on Playfair/Amiri. */}
+          <span
+            className="text-lg font-semibold tracking-[0.28em] text-cream"
+            style={{ fontFamily: "Georgia, 'Times New Roman', Times, serif" }}
+          >
             BIZRA
-          </span>
-          <span className="hidden font-arabic text-sm text-gold-500/70 sm:inline" aria-hidden="true">
-            البذرة
           </span>
         </a>
 

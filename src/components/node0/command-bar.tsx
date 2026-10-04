@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Node0State } from "./types";
 import { statusTone } from "./shared";
+import { classifyRuntime } from "../bizra/runtime-status";
 
 const NAV = [
   { href: "#deck", label: "Deck" },
@@ -23,23 +24,24 @@ const NAV = [
   { href: "#moat", label: "Moat" },
 ];
 
-type LiveStatus = "LIVE" | "REFERENCE" | "HALTED" | "UNREACHABLE";
+type LiveStatus = "LIVE" | "REFERENCE" | "HALTED" | "MISMATCH" | "UNREACHABLE";
 
 function statusOf(state: Node0State | null, error: string | null): LiveStatus {
-  if (!state) return "UNREACHABLE";
-  if (error) return "UNREACHABLE";
-  if (state.runtime.status === "HALTED") return "HALTED";
-  // CONTROL-PLANE-SEAL-1B truth projection: PUBLIC_REFERENCE / REFERENCE_ONLINE
-  // is a read-only archive presentation — never an active Node0.
-  if (state.runtime.mode === "PUBLIC_REFERENCE" || state.runtime.status === "REFERENCE_ONLINE") return "REFERENCE";
-  if (state.runtime.status === "LIVE" && state.runtime.node0_active !== true) return "REFERENCE";
-  return "LIVE";
+  const kind = classifyRuntime(state?.runtime, error === null, error);
+  switch (kind) {
+    case "LIVE": return "LIVE";
+    case "HALTED": return "HALTED";
+    case "MISMATCH": return "MISMATCH";
+    case "REFERENCE": return "REFERENCE";
+    default: return "UNREACHABLE";
+  }
 }
 
 const pillTone: Record<LiveStatus, { dot: string; text: string; ping?: boolean }> = {
   LIVE: { dot: "bg-emerald-400", text: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10", ping: true },
   REFERENCE: { dot: "bg-amber-400", text: "text-amber-300 border-amber-500/40 bg-amber-500/10", ping: true },
   HALTED: { dot: "bg-red-400", text: "text-red-300 border-red-500/40 bg-red-500/10", ping: true },
+  MISMATCH: { dot: "bg-amber-400", text: "text-amber-300 border-amber-500/40 bg-amber-500/10" },
   UNREACHABLE: { dot: "bg-amber-400", text: "text-amber-300 border-amber-500/40 bg-amber-500/10" },
 };
 
@@ -87,6 +89,8 @@ export function CommandBar({
           </span>
           {live === "UNREACHABLE"
             ? "RUNTIME UNREACHABLE"
+            : live === "MISMATCH"
+              ? "CONTRACT MISMATCH"
             : live === "REFERENCE"
               ? "REFERENCE · READ-ONLY"
               : live}
@@ -95,13 +99,15 @@ export function CommandBar({
               ? "Runtime is live on port 7421"
               : live === "REFERENCE"
                 ? "Reference archive online: read-only presentation of sealed state — Node0 is not active"
+                : live === "MISMATCH"
+                  ? "Runtime answered with a different contract — state is unknown"
                 : live === "HALTED"
                   ? "Runtime is halted: constitution drift"
                   : "Runtime is unreachable — retrying"}
           </span>
         </span>
 
-        {live === "UNREACHABLE" ? (
+        {live === "UNREACHABLE" || live === "MISMATCH" ? (
           <Button
             variant="outline"
             size="sm"
